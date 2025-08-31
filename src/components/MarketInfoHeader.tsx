@@ -110,7 +110,7 @@ export function MarketInfoHeader() {
       <TickerSelector />
 
       {/* Market Data Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-1 text-sm">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
         <Stat
           label="Mark Price"
           value={mark ? `$${formatters.formatPrice(mark.toString())}` : "—"}
@@ -126,7 +126,7 @@ export function MarketInfoHeader() {
           value={
             changeAbs == null || changePct == null
               ? "—"
-              : `${changeAbs >= 0 ? "+" : ""}${formatters.formatPriceChange(
+              : `${formatters.formatPriceChange(
                   changeAbs.toString(),
                 )} / ${formatters.formatPercentageChange(
                   (changePct * 100).toString(),
