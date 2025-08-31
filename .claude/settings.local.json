@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
+      "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
+      "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
+      "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
+      "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
