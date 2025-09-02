@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { formatters, hyperliquidApi } from "@/services/hyperliquidApi";
-import { useMarketData } from "@/contexts/MarketDataContext";
+import { hyperliquidApi } from "@/services/hyperliquidApi";
+import { formatters } from "@/lib/utils";
 
 interface Trade {
   time: number;
   coin: string;
-  side: "buy" | "sell";
+  side: string;
   price: string;
   size: string;
   txHash?: string;
@@ -25,18 +25,15 @@ export function TradeHistoryTab() {
       setLoading(true);
       try {
         const response = await hyperliquidApi.getUserFills(user.wallet.address);
-        console.log("res", response);
         if (response && Array.isArray(response)) {
           const mapped: Trade[] = response
-            .map((fill: any) => ({
-              time: Number(fill.time || fill.timestamp || Date.now()),
-              coin: String(fill.coin || fill.asset || ""),
-              side: String(fill.side || (fill.b ? "buy" : "sell")) as
-                | "buy"
-                | "sell",
-              price: formatters.formatPrice(fill.px || fill.price || "0"),
-              size: formatters.formatSize(fill.sz || fill.size || "0"),
-              txHash: fill.hash || fill.txHash,
+            .map((fill) => ({
+              time: Number(fill.time || fill.time || Date.now()),
+              coin: String(fill.coin || ""),
+              side: String(fill.dir) || "",
+              price: formatters.formatPrice(fill.px || "0"),
+              size: formatters.formatSize(fill.sz || "0"),
+              txHash: fill.hash,
             }))
             .sort((a, b) => b.time - a.time)
             .slice(0, 100); // Limit to last 100 trades
@@ -73,8 +70,8 @@ export function TradeHistoryTab() {
         <div className="space-y-2">
           <div className="grid grid-cols-5 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700">
             <div>Time</div>
-            <div>Asset</div>
-            <div>Side</div>
+            <div>Coin</div>
+            <div>Direction</div>
             <div className="text-right">Price</div>
             <div className="text-right">Size</div>
           </div>

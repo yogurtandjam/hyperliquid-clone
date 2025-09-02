@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { TickerSelector } from "@/components/TickerSelector";
 import { useMarketData } from "@/contexts/MarketDataContext";
-import { subscriptionClient, formatters } from "@/services/hyperliquidApi";
+import { subscriptionClient } from "@/services/hyperliquidApi";
+import { formatters, priceToWire } from "@/lib/utils";
 
 const num = (v: unknown): number | undefined => {
   if (v == null) return undefined;
@@ -39,7 +40,7 @@ const normalizeCtx = (raw: any): MarketCtx => {
 };
 
 export function MarketInfoHeader() {
-  const { selectedSymbol } = useMarketData();
+  const { selectedSymbol, selectedAsset } = useMarketData();
 
   const [mark, setMark] = useState<number | undefined>();
   const [oracle, setOracle] = useState<number | undefined>();
@@ -63,7 +64,7 @@ export function MarketInfoHeader() {
     let unsub: null | (() => Promise<void>) = null;
 
     subscriptionClient
-      .activeAssetCtx({ coin: selectedSymbol }, (payload: any) => {
+      .activeAssetCtx({ coin: selectedSymbol }, (payload) => {
         const c = normalizeCtx(payload);
 
         // Primary fields
@@ -73,7 +74,15 @@ export function MarketInfoHeader() {
         // 24h change from prevDayPx
         if (c.prevDayPx !== undefined && c.markPx !== undefined) {
           const abs = c.markPx - c.prevDayPx;
-          setChangeAbs(abs);
+          console.log(
+            "yo",
+            priceToWire(abs, "perp", selectedAsset?.szDecimals),
+          );
+          setChangeAbs(
+            formatters.formatPriceChange(
+              priceToWire(abs, "perp", selectedAsset?.szDecimals),
+            ),
+          );
           setChangePct(c.prevDayPx !== 0 ? abs / c.prevDayPx : undefined);
         }
 
@@ -103,32 +112,23 @@ export function MarketInfoHeader() {
     () => (nextFundingMs != null ? nextFundingMs - nowMs : undefined),
     [nextFundingMs, nowMs],
   );
-
   return (
-    <div className="trading-panel flex">
+    <div className="trading-panel flex gap-3">
       {/* Ticker Selector */}
       <TickerSelector />
 
       {/* Market Data Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 text-sm">
-        <Stat
-          label="Mark Price"
-          value={mark ? `$${formatters.formatPrice(mark.toString())}` : "—"}
-        />
+      <div className="flex text-sm overflow-x-auto gap-6">
+        <Stat label="Mark" value={mark ? `$${mark.toString()}` : "—"} />
 
-        <Stat
-          label="Oracle Price"
-          value={oracle ? `$${formatters.formatPrice(oracle.toString())}` : "—"}
-        />
+        <Stat label="Oracle" value={oracle ? `$${oracle.toString()}` : "—"} />
 
         <Stat
           label="24h Change"
           value={
             changeAbs == null || changePct == null
               ? "—"
-              : `${formatters.formatPriceChange(
-                  changeAbs.toString(),
-                )} / ${formatters.formatPercentageChange(
+              : `${changeAbs} / ${formatters.formatPercentageChange(
                   (changePct * 100).toString(),
                 )}`
           }
@@ -157,7 +157,7 @@ export function MarketInfoHeader() {
   );
 }
 
-function Stat({
+const Stat = ({
   label,
   value,
   colored,
@@ -165,15 +165,15 @@ function Stat({
   label: string;
   value: string;
   colored?: number;
-}) {
+}) => {
   const isPos = (colored ?? 0) > 0;
   const isNeg = (colored ?? 0) < 0;
 
   return (
-    <div className="flex flex-col">
-      <div className="text-xs text-gray-400 mb-1">{label}</div>
+    <div className="flex flex-col justify-center">
+      <div className="text-xs text-gray-400 mb-1 text-nowrap">{label}</div>
       <div
-        className={`font-semibold ${
+        className={`text-xs text-nowrap ${
           isPos ? "text-teal-400" : isNeg ? "text-red-400" : "text-white"
         }`}
       >
@@ -181,4 +181,4 @@ function Stat({
       </div>
     </div>
   );
-}
+};

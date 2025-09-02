@@ -5,15 +5,15 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useMemo,
   ReactNode,
 } from "react";
-import {
-  formatters,
-  hyperliquidApi,
-  subscriptionClient,
-} from "@/services/hyperliquidApi";
+import { hyperliquidApi, subscriptionClient } from "@/services/hyperliquidApi";
+import { formatters, formatToMatch, priceToWire } from "@/lib/utils";
 import { usePrivy } from "@privy-io/react-auth";
 import { Address } from "viem";
+import { Subscription } from "@nktkas/hyperliquid";
+import { useWebData2Subscription } from "@/hooks/useWebData2Sub";
 
 interface MarketData {
   [symbol: string]: {
@@ -42,15 +42,22 @@ interface Trade {
   txHash?: string;
 }
 
+interface Asset {
+  name: string;
+  szDecimals: number;
+  [key: string]: any;
+}
+
 interface MarketDataContextType {
   marketData: MarketData;
   orderBook: OrderBookData | null;
   recentTrades: Trade[];
   selectedSymbol: string;
+  selectedAsset: Asset | null;
   setSelectedSymbol: (symbol: string) => void;
   isConnected: boolean;
   refreshData: () => void;
-  availableAssets: string[];
+  availableAssets: Asset[];
 }
 
 const MarketDataContext = createContext<MarketDataContextType | null>(null);
@@ -68,82 +75,72 @@ interface MarketDataProviderProps {
 }
 
 export function MarketDataProvider({ children }: MarketDataProviderProps) {
-  const { user } = usePrivy();
   const [marketData, setMarketData] = useState<MarketData>({});
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState("");
-  const [availableAssets, setAvailableAssets] = useState<string[]>([]);
+  const [availableAssets, setAvailableAssets] = useState<Asset[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+
+  // Derived state: compute selectedAsset from selectedSymbol and availableAssets
+  const selectedAsset = useMemo(() => {
+    return (
+      availableAssets.find((asset) => asset.name === selectedSymbol) || null
+    );
+  }, [selectedSymbol, availableAssets]);
 
   // WebSocket subscriptions references
   const subscriptionsRef = React.useRef<{
-    allMids?: any;
-    l2Book?: any;
-    trades?: any;
+    allMids?: Subscription;
+    l2Book?: Subscription;
+    trades?: Subscription;
+    webData2?: Subscription;
   }>({});
 
+  // TODO: do this later for faster/better price updates on all assets. for now we can use the webdata2 sub
   // Subscribe to all mids (prices) for all assets
-  useEffect(() => {
-    const setupAllMidsSubscription = async () => {
-      try {
-        console.log("🔗 Setting up allMids subscription...");
+  // useEffect(() => {
+  //   const setupAllMidsSubscription = async () => {
+  //     try {
+  //       console.log("🔗 Setting up allMids subscription...");
 
-        subscriptionsRef.current.allMids = await subscriptionClient.allMids(
-          (data) => {
-            console.log(
-              "📊 AllMids update:",
-              Object.keys(data).length,
-              "assets",
-            );
+  //       subscriptionsRef.current.allMids = await subscriptionClient.allMids(
+  //         (data) => {
+  //           console.log(
+  //             "📊 AllMids update:",
+  //             Object.keys(data.mids).length,
+  //             "assets",
+  //           );
 
-            setMarketData((prev) => {
-              const updatedMarketData: MarketData = {};
-              Object.entries(data).forEach(([symbol, price]) => {
-                const currentPrice = parseFloat(price as string);
-                const prevData = prev[symbol];
-                const change24h = prevData
-                  ? (currentPrice - parseFloat(prevData.price)).toFixed(3)
-                  : "0.000";
-                const changePercent =
-                  prevData && parseFloat(prevData.price) > 0
-                    ? (
-                        ((currentPrice - parseFloat(prevData.price)) /
-                          parseFloat(prevData.price)) *
-                        100
-                      ).toFixed(2)
-                    : "0.00";
+  //           setMarketData((prev) => {
+  //             const updatedMarketData: MarketData = { ...prev };
+  //             console.log(prev);
+  //             Object.entries(data).forEach(([symbol, price]) => {
+  //               if (!updatedMarketData[symbol]) updatedMarketData[symbol] = {};
+  //               updatedMarketData[symbol].price = String(price);
+  //             });
+  //             return updatedMarketData;
+  //           });
 
-                updatedMarketData[symbol] = {
-                  price: formatters.formatPrice(price as string),
-                  change24h: formatters.formatPriceChange(change24h),
-                  changePercent24h: `${changePercent}%`,
-                  volume24h: prevData?.volume24h || "0",
-                  lastUpdate: Date.now(),
-                };
-              });
-              return { ...prev, ...updatedMarketData };
-            });
+  //           setIsConnected(true);
+  //         },
+  //       );
 
-            setIsConnected(true);
-          },
-        );
+  //       console.log("✅ AllMids subscription established");
+  //     } catch (error) {
+  //       console.error("❌ Error setting up allMids subscription:", error);
+  //       setIsConnected(false);
+  //     }
+  //   };
 
-        console.log("✅ AllMids subscription established");
-      } catch (error) {
-        console.error("❌ Error setting up allMids subscription:", error);
-        setIsConnected(false);
-      }
-    };
+  //   setupAllMidsSubscription();
 
-    setupAllMidsSubscription();
-
-    return () => {
-      if (subscriptionsRef.current.allMids) {
-        subscriptionsRef.current.allMids.unsubscribe();
-      }
-    };
-  }, []);
+  //   return () => {
+  //     if (subscriptionsRef.current.allMids) {
+  //       subscriptionsRef.current.allMids.unsubscribe();
+  //     }
+  //   };
+  // }, []);
 
   // Subscribe to L2 book and trades for selected symbol
   useEffect(() => {
@@ -173,68 +170,65 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
               const asks = levels[1] || [];
 
               // Calculate spread
-              const bestBid = bids[0]?.[0] || "0";
-              const bestAsk = asks[0]?.[0] || "0";
-              const spreadAbs = (
-                parseFloat(bestAsk) - parseFloat(bestBid)
-              ).toFixed(3);
+              const bestBid = bids[0]?.px || "0";
+              const bestAsk = asks[0]?.px || "0";
+              const spreadAbs = priceToWire(
+                parseFloat(bestAsk) - parseFloat(bestBid),
+                "perp",
+                selectedAsset?.szDecimals,
+              );
               const spreadPerc =
                 parseFloat(bestBid) > 0
                   ? (
                       ((parseFloat(bestAsk) - parseFloat(bestBid)) /
                         parseFloat(bestBid)) *
                       100
-                    ).toFixed(3)
+                    ).toFixed(4)
                   : "0";
 
               // Process bids and asks with running totals - ensure arrays exist
               const processedBids = (Array.isArray(bids) ? bids : [])
                 .slice(0, 15)
-                .map((level: any, index: number) => {
-                  const price = Array.isArray(level)
-                    ? level[0]
-                    : level.px || level.price || "0";
-                  const size = Array.isArray(level)
-                    ? level[1]
-                    : level.sz || level.size || "0";
+                .map((level, index: number) => {
+                  const price = level.px || "0";
+                  const size = level.sz || "0";
 
                   const runningTotal = (Array.isArray(bids) ? bids : [])
                     .slice(0, index + 1)
-                    .reduce((sum: number, lvl: any) => {
-                      const levelSize = Array.isArray(lvl)
-                        ? lvl[1]
-                        : lvl.sz || lvl.size || "0";
+                    .reduce((sum: number, lvl) => {
+                      const levelSize = lvl.sz || "0";
                       return sum + parseFloat(levelSize);
                     }, 0);
+
                   return {
-                    price: formatters.formatPrice(price),
-                    size: formatters.formatSize(size),
-                    total: formatters.formatSize(runningTotal.toString()),
+                    price: price,
+                    size: size,
+                    total: runningTotal,
                   };
                 });
 
               const processedAsks = (Array.isArray(asks) ? asks : [])
                 .slice(0, 15)
-                .map((level: any, index: number) => {
+                .map((level, index: number) => {
                   const price = Array.isArray(level)
                     ? level[0]
-                    : level.px || level.price || "0";
+                    : level.px || "0";
                   const size = Array.isArray(level)
                     ? level[1]
-                    : level.sz || level.size || "0";
+                    : level.sz || "0";
 
                   const runningTotal = (Array.isArray(asks) ? asks : [])
                     .slice(0, index + 1)
-                    .reduce((sum: number, lvl: any) => {
+                    .reduce((sum: number, lvl) => {
                       const levelSize = Array.isArray(lvl)
                         ? lvl[1]
-                        : lvl.sz || lvl.size || "0";
+                        : lvl.sz || "0";
                       return sum + parseFloat(levelSize);
                     }, 0);
                   return {
-                    price: formatters.formatPrice(price),
-                    size: formatters.formatSize(size),
-                    total: formatters.formatSize(runningTotal.toString()),
+                    price,
+                    size,
+                    total: runningTotal.toFixed(selectedAsset?.szDecimals),
                   };
                 });
 
@@ -261,8 +255,8 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
             if (data && Array.isArray(data)) {
               const newTrades: Trade[] = data.map((trade) => ({
                 symbol: selectedSymbol,
-                price: formatters.formatPrice(trade.px),
-                size: formatters.formatSize(trade.sz),
+                price: trade.px,
+                size: trade.sz,
                 side: trade.side === "A" ? "sell" : "buy", // A = Ask (sell), B = Bid (buy)
                 timestamp: trade.time,
                 txHash: trade.hash,
@@ -302,22 +296,20 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
         // First, fetch meta data to get available perpetuals
         const metaData = await hyperliquidApi.getMeta();
         if (metaData && metaData.universe) {
-          const perpetuals = metaData.universe
-            .filter((asset: any) => asset.name) // Only perpetuals have names
-            .map((asset: any) => asset.name);
+          const perpetuals = metaData.universe.filter((asset) => asset.name); // Only perpetuals have names
 
           console.log(
             `✅ Found ${perpetuals.length} perpetuals:`,
-            perpetuals.slice(0, 10),
+            perpetuals.slice(0, 10).map((asset) => asset.name),
           );
           setAvailableAssets(perpetuals);
 
           // Set default symbol to the first available perpetual (usually BTC)
           if (perpetuals.length > 0 && !selectedSymbol) {
-            const defaultSymbol =
-              perpetuals.find((symbol: string) => symbol === "BTC") ||
+            const defaultAsset =
+              perpetuals.find((asset: Asset) => asset.name === "BTC") ||
               perpetuals[0];
-            setSelectedSymbol(defaultSymbol);
+            setSelectedSymbol(defaultAsset.name);
           }
         }
 
@@ -335,7 +327,6 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
               change24h: "0.000",
               changePercent24h: "0.00%",
               volume24h: "0",
-              lastUpdate: Date.now(),
             };
           });
           setMarketData(initialMarketData);
@@ -344,7 +335,13 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
       } catch (error) {
         console.error("❌ Error fetching initial data:", error);
         // Fall back to popular assets if API fails
-        setAvailableAssets(["BTC", "ETH", "SOL", "ARB"]);
+        const fallbackAssets = [
+          { name: "BTC", szDecimals: 4 },
+          { name: "ETH", szDecimals: 4 },
+          { name: "SOL", szDecimals: 4 },
+          { name: "ARB", szDecimals: 4 },
+        ];
+        setAvailableAssets(fallbackAssets);
         setSelectedSymbol("BTC");
         setMarketData({
           BTC: {
@@ -377,13 +374,9 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
 
           const processedBids = (Array.isArray(bids) ? bids : [])
             .slice(0, 15)
-            .map((level: any) => {
-              const price = Array.isArray(level)
-                ? level[0]
-                : level.px || level.price || "0";
-              const size = Array.isArray(level)
-                ? level[1]
-                : level.sz || level.size || "0";
+            .map((level) => {
+              const price = Array.isArray(level) ? level[0] : level.px || "0";
+              const size = Array.isArray(level) ? level[1] : level.sz || "0";
               return {
                 price: formatters.formatPrice(price),
                 size: formatters.formatSize(size),
@@ -393,13 +386,9 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
 
           const processedAsks = (Array.isArray(asks) ? asks : [])
             .slice(0, 15)
-            .map((level: any) => {
-              const price = Array.isArray(level)
-                ? level[0]
-                : level.px || level.price || "0";
-              const size = Array.isArray(level)
-                ? level[1]
-                : level.sz || level.size || "0";
+            .map((level) => {
+              const price = Array.isArray(level) ? level[0] : level.px || "0";
+              const size = Array.isArray(level) ? level[1] : level.sz || "0";
               return {
                 price: formatters.formatPrice(price),
                 size: formatters.formatSize(size),
@@ -411,7 +400,7 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
             symbol: selectedSymbol,
             bids: processedBids,
             asks: processedAsks,
-            spread: { absolute: "0.001", percentage: "0.002%" },
+            spread: { absolute: "0.000", percentage: "0.000%" },
             lastUpdate: Date.now(),
           });
         }
@@ -461,6 +450,13 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
     };
   }, []);
 
+  useWebData2Subscription({
+    availableAssets,
+    setMarketData,
+    setIsConnected,
+    subscriptionsRef,
+  });
+
   return (
     <MarketDataContext.Provider
       value={{
@@ -468,6 +464,7 @@ export function MarketDataProvider({ children }: MarketDataProviderProps) {
         orderBook,
         recentTrades,
         selectedSymbol,
+        selectedAsset,
         setSelectedSymbol,
         isConnected,
         refreshData,

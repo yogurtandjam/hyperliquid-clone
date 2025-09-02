@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/custom-tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
@@ -14,38 +19,58 @@ interface OrderBookEntry {
 }
 
 export function OrderBook() {
-  const { orderBook, recentTrades, selectedSymbol, isConnected } =
+  const { orderBook, recentTrades, selectedSymbol, selectedAsset } =
     useMarketData();
 
   const OrderBookTable = ({
     data,
     type,
+    maxTotal,
   }: {
     data: OrderBookEntry[];
     type: "asks" | "bids";
+    maxTotal: number;
   }) => (
-    <div className="space-y-1">
-      {data.map((entry, index) => (
-        <div
-          key={index}
-          className={`grid grid-cols-3 gap-2 text-xs py-1 px-2 rounded hover:bg-gray-800/50 cursor-pointer ${
-            type === "asks" ? "order-book-ask" : "order-book-bid"
-          }`}
-        >
-          <div className="text-right font-mono">{entry.price}</div>
-          <div className="text-right font-mono text-gray-300">{entry.size}</div>
-          <div className="text-right font-mono text-gray-300">
-            {entry.total}
+    <div className="space-y-0.5">
+      {data.map((entry, index) => {
+        const fillPercentage =
+          maxTotal > 0 ? (parseFloat(entry.total) / maxTotal) * 100 : 0;
+
+        return (
+          <div
+            key={index}
+            className={`grid grid-cols-3 gap-2 text-xs rounded hover:bg-gray-800/50 cursor-pointer relative ${
+              type === "asks" ? "order-book-ask" : "order-book-bid"
+            }`}
+            style={{
+              background: `linear-gradient(to right, ${
+                type === "asks"
+                  ? `rgba(127, 29, 29, 0.2) ${fillPercentage}%`
+                  : `rgba(20, 83, 45, 0.2) ${fillPercentage}%`
+              }, transparent ${fillPercentage}%)`,
+            }}
+          >
+            <div className="text-left font-mono py-1 px-2">{entry.price}</div>
+            <div className="text-right font-mono text-gray-300 py-1 px-2">
+              {selectedAsset
+                ? parseFloat(entry.size).toFixed(selectedAsset.szDecimals)
+                : entry.size}
+            </div>
+            <div className="text-right font-mono text-gray-300 py-1 px-2">
+              {selectedAsset
+                ? parseFloat(entry.total).toFixed(selectedAsset.szDecimals)
+                : entry.total}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 
   return (
-    <div className="trading-panel h-full">
+    <div className="trading-panel h-full p-0">
       <Tabs defaultValue="orderbook" className="h-full flex flex-col">
-        <TabsList className="grid w-full grid-cols-2 bg-gray-800 mb-4">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger
             value="orderbook"
             className="data-[state=active]:bg-teal-600"
@@ -60,60 +85,58 @@ export function OrderBook() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="orderbook" className="flex-1 space-y-4">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-2">
-              <div
-                className={`h-2 w-2 rounded-full ${
-                  isConnected ? "bg-teal-500" : "bg-red-500"
-                }`}
-              ></div>
-              <span className="text-gray-400">
-                {isConnected ? "Live" : "Disconnected"}
-              </span>
+        <TabsContent
+          value="orderbook"
+          className="flex-1 space-y-4  flex flex-col"
+        >
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700 px-2">
+              <div className="text-left">Price</div>
+              <div className="text-right">Size ({selectedSymbol})</div>
+              <div className="text-right">Total ({selectedSymbol})</div>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-gray-400">{selectedSymbol}</span>
-              <div className="h-4 w-4 bg-gray-700 rounded border"></div>
-            </div>
-          </div>
-
-          {/* Header */}
-          <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700">
-            <div className="text-right">Price</div>
-            <div className="text-right">Size ({selectedSymbol})</div>
-            <div className="text-right">Total ({selectedSymbol})</div>
-          </div>
-
-          <ScrollArea className="flex-1 h-64">
             {orderBook ? (
-              <>
-                {/* Asks */}
-                <div className="mb-4">
-                  <OrderBookTable
-                    data={[...orderBook.asks].reverse()}
-                    type="asks"
-                  />
-                </div>
+              (() => {
+                const asksData = [...orderBook.asks].reverse().slice(0, 10);
+                const bidsData = orderBook.bids.slice(0, 10);
 
-                {/* Spread */}
-                <div className="flex items-center justify-center py-2 border-y border-gray-700 bg-gray-800/30">
-                  <div className="text-center">
-                    <div className="text-white font-mono text-lg">
-                      {orderBook.bids[0]?.price || "0.000"}
-                    </div>
-                    <div className="text-xs text-gray-400">
-                      Spread {orderBook.spread.absolute}{" "}
-                      {orderBook.spread.percentage}
-                    </div>
-                  </div>
-                </div>
+                // Calculate max totals for each side
+                const maxAsksTotal = Math.max(
+                  ...asksData.map((ask) => parseFloat(ask.total)),
+                );
+                const maxBidsTotal = Math.max(
+                  ...bidsData.map((bid) => parseFloat(bid.total)),
+                );
 
-                {/* Bids */}
-                <div className="mt-4">
-                  <OrderBookTable data={orderBook.bids} type="bids" />
-                </div>
-              </>
+                return (
+                  <>
+                    {/* Asks */}
+                    <div>
+                      <OrderBookTable
+                        data={asksData}
+                        type="asks"
+                        maxTotal={maxAsksTotal}
+                      />
+                    </div>
+
+                    {/* Spread */}
+                    <div className="flex items-center justify-evenly py-1 bg-gray-700 text-xs">
+                      <span>Spread</span>
+                      <span>{orderBook.spread.absolute}</span>
+                      <span>{orderBook.spread.percentage}</span>
+                    </div>
+
+                    {/* Bids */}
+                    <div>
+                      <OrderBookTable
+                        data={bidsData}
+                        type="bids"
+                        maxTotal={maxBidsTotal}
+                      />
+                    </div>
+                  </>
+                );
+              })()
             ) : (
               <div className="text-center py-8 text-gray-400">
                 Loading order book...
@@ -122,14 +145,14 @@ export function OrderBook() {
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="trades" className="flex-1">
+        <TabsContent value="trades" className="flex-1 space-y-4 flex flex-col">
           <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700">
             <div className="text-right">Price</div>
             <div className="text-right">Size ({selectedSymbol})</div>
             <div className="text-right">Time</div>
           </div>
 
-          <ScrollArea className="h-80 scrollbar-thin">
+          <ScrollArea className="flex-1 min-h-0 scrollbar-thin">
             {recentTrades.length > 0 ? (
               <div className="space-y-1">
                 {recentTrades.map((trade, index) => (
@@ -138,14 +161,18 @@ export function OrderBook() {
                     className="grid grid-cols-3 gap-2 text-xs py-1 px-2 rounded hover:bg-gray-800/50 cursor-pointer group"
                   >
                     <div
-                      className={`text-right font-mono ${
+                      className={`text-left font-mono ${
                         trade.side === "buy" ? "text-teal-400" : "text-red-400"
                       }`}
                     >
-                      {parseFloat(trade.price).toFixed(3)}
+                      {parseFloat(trade.price).toFixed(2)}
                     </div>
                     <div className="text-right font-mono text-gray-300">
-                      {parseFloat(trade.size).toFixed(2)}
+                      {selectedAsset
+                        ? parseFloat(trade.size).toFixed(
+                            selectedAsset.szDecimals,
+                          )
+                        : parseFloat(trade.size)}
                     </div>
                     <div className="text-right font-mono text-gray-300 flex items-center justify-end space-x-1">
                       <span>

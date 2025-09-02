@@ -9,14 +9,11 @@ import {
   ISeriesApi,
   HistogramData,
 } from "lightweight-charts";
-import {
-  subscriptionClient,
-  infoClient,
-  formatters,
-} from "@/services/hyperliquidApi";
+import { subscriptionClient, infoClient } from "@/services/hyperliquidApi";
+import { formatters } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/custom-tabs";
 import {
   BarChart3,
   TrendingUp,
@@ -131,10 +128,9 @@ export const TradingChart = () => {
   > | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
-  const { selectedSymbol, marketData } = useMarketData();
+  const { selectedSymbol } = useMarketData();
 
   const [timeFrame, setTimeframe] = useState<TFKey>("1D_1M");
-  const [chartType, setChartType] = useState("candles");
   const [isLoading, setIsLoading] = useState(true);
   const {
     startTime: seedStartMs,
@@ -151,8 +147,17 @@ export const TradingChart = () => {
     if (!containerRef.current) return;
     const chart = createChart(containerRef.current, {
       autoSize: true,
-      layout: { background: { color: "#0B0E13" }, textColor: "#E8EDF2" },
-      grid: { horzLines: { visible: false }, vertLines: { visible: false } },
+      layout: { background: { color: "#0f1a1f" }, textColor: "#E8EDF2" },
+      grid: {
+        horzLines: {
+          visible: true,
+          color: "rgba(128, 128, 128, 0.1)",
+        },
+        vertLines: {
+          visible: true,
+          color: "rgba(128, 128, 128, 0.1)",
+        },
+      },
       crosshair: { mode: 0 },
       leftPriceScale: {
         borderVisible: false,
@@ -352,95 +357,19 @@ export const TradingChart = () => {
 
   /* ---------- UI ---------- */
   return (
-    <div className="trading-panel h-full">
-      {/* Chart Header */}
-      <div className="flex items-center justify-between mb-4">
-        {/* <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="text-xs">
-              {TF[timeFrame].label}
-            </Badge>
-            <span className="text-gray-400">Hyperliquid</span>
-            <div className="h-2 w-2 rounded-full bg-teal-500"></div>
-          </div>
-
-          {currentCandle && (
-            <div className="text-sm">
-              <span className="text-white font-semibold">O</span>
-              <span className="text-gray-400 ml-1">
-                {currentCandle.open.toFixed(3)}
-              </span>
-              <span className="text-white font-semibold ml-4">H</span>
-              <span className="text-gray-400 ml-1">
-                {currentCandle.high.toFixed(3)}
-              </span>
-              <span className="text-white font-semibold ml-4">L</span>
-              <span className="text-gray-400 ml-1">
-                {currentCandle.low.toFixed(3)}
-              </span>
-              <span className="text-white font-semibold ml-4">C</span>
-              <span
-                className={`ml-1 ${
-                  priceChange >= 0 ? "text-teal-400" : "text-red-400"
-                }`}
-              >
-                {currentCandle.close.toFixed(3)}
-              </span>
-              <span
-                className={`ml-2 ${
-                  priceChange >= 0 ? "text-teal-400" : "text-red-400"
-                }`}
-              >
-                {formatters.formatPriceChange(priceChange.toString())} (
-                {priceChangePercent.toFixed(2)}%)
-              </span>
-            </div>
-          )}
-        </div> */}
-      </div>
-
-      {/* Chart Toolbar */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1">
-            <Button
-              variant={chartType === "candles" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setChartType("candles")}
-              className="p-2"
-            >
-              <CandlestickChart className="h-4 w-4" />
-            </Button>
-            <span className="text-gray-400 text-sm">Indicators</span>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm">
-            <Search className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm">
-            <Maximize className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
+    <div className="trading-panel h-full flex flex-col">
       {/* Chart Container */}
-      <div className="relative">
-        <div
-          ref={containerRef}
-          className=" h-96 bg-gray-900/30 rounded border border-gray-700"
-        />
 
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
-              <p className="text-gray-400">Loading chart data...</p>
-            </div>
+      <div ref={containerRef} className="flex-1 bg-gray-900/30 rounded" />
+
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/50 rounded">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
+            <p className="text-gray-400">Loading chart data...</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
       {/* Chart Footer */}
       <div>
         <Tabs
