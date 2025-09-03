@@ -3,9 +3,9 @@
 import { useWebSocketSubscriptions } from "@/hooks/useWebSocketSubscriptions";
 import { useInitialMarketData } from "@/hooks/useInitialMarketData";
 import { useInitialOrderBook } from "@/hooks/useInitialOrderBook";
-import { useInitialFundingHistory } from "@/hooks/useFundingHistory";
-import { useInitialOrderHistory } from "@/hooks/useOrderHistory";
-import { useInitialTradesData } from "@/hooks/useTradesData";
+import { useInitialFundingHistory } from "@/hooks/useInitialFundingHistory";
+import { useInitialOrderHistory } from "@/hooks/useInitialOrderHistory";
+import { useInitialTradesData } from "@/hooks/useInitialTradesData";
 import { formatters } from "@/lib/utils";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import {
@@ -33,6 +33,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useInitialTwapData } from "@/hooks/useInitialTwapData";
 
 const AppDataContext = createContext<AppDataContextType | null>(null);
 
@@ -92,6 +93,7 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
   useInitialFundingHistory(7, setFundingHistory);
   useInitialOrderHistory(setOrderHistory);
   useInitialTradesData(setTradeHistory);
+  useInitialTwapData(setTwapData, 24);
 
   // Use consolidated WebSocket subscriptions hook
   useWebSocketSubscriptions({
