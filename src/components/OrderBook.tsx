@@ -176,7 +176,7 @@ export function OrderBook() {
                     </div>
                     <div className="text-right font-mono text-gray-300 flex items-center justify-end space-x-1">
                       <span>
-                        {new Date(trade.timestamp).toLocaleTimeString("en-US", {
+                        {new Date(trade.time).toLocaleTimeString("en-US", {
                           hour12: false,
                           hour: "2-digit",
                           minute: "2-digit",
