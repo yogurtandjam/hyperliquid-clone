@@ -1,17 +1,19 @@
 "use client";
 
-import { useAppData } from "@/contexts/AppContext";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { QueryKeys } from "@/types";
+import { UserFundingUpdate } from "@nktkas/hyperliquid";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
 
-export function useFundingHistory(days: number = 7) {
-  const { selectedSymbol, fundingHistory, setFundingHistory } = useAppData();
+export function useInitialFundingHistory(
+  days: number = 7,
+  setFundingHistory: (fundingHistory: UserFundingUpdate[]) => void,
+) {
   const { user } = usePrivy();
 
   const query = useQuery({
-    queryKey: [QueryKeys.FundingHistory],
+    queryKey: [QueryKeys.FundingHistory, user?.wallet?.address],
     queryFn: async () => {
       if (!user?.wallet?.address) {
         throw new Error("No user");
@@ -23,9 +25,10 @@ export function useFundingHistory(days: number = 7) {
         startTime,
         endTime,
       );
-      console.log(rawFundingHistory);
       // Update context state
-      setFundingHistory(rawFundingHistory.sort((a, b) => b.time - a.time));
+      const sortedHistory = rawFundingHistory.sort((a, b) => b.time - a.time);
+      setFundingHistory(sortedHistory);
+
       return rawFundingHistory;
     },
     enabled: !!user?.wallet?.address,
@@ -33,9 +36,5 @@ export function useFundingHistory(days: number = 7) {
     staleTime: 30000, // Data considered fresh for 30 seconds
   });
 
-  // Return data from context state, with query status
-  return {
-    ...query,
-    data: fundingHistory,
-  };
+  return query;
 }

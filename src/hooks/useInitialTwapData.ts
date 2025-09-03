@@ -1,14 +1,15 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useAppData } from "@/contexts/AppContext";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { usePrivy } from "@privy-io/react-auth";
 import { Address } from "viem";
-import { QueryKeys } from "@/types";
+import { QueryKeys, TwapData } from "@/types";
 
-export function useTwapData(hours: number = 24) {
-  const { twapData, setTwapData } = useAppData();
+export function useInitialTwapData(
+  setTwapData: (twapData: TwapData) => void,
+  hours: number = 24
+) {
   const { user, authenticated } = usePrivy();
   const userAddress = user?.wallet?.address as Address;
 
@@ -61,9 +62,5 @@ export function useTwapData(hours: number = 24) {
     staleTime: 30000, // Data considered fresh for 30 seconds
   });
 
-  // Return data from context state, with query status
-  return {
-    ...query,
-    data: twapData || query.data,
-  };
+  return query;
 }

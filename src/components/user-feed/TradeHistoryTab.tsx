@@ -1,6 +1,6 @@
 "use client";
 import { formatters } from "@/lib/utils";
-import { useTradesData } from "@/hooks/useTradesData";
+import { useAppData } from "@/contexts/AppContext";
 import {
   Table,
   TableBody,
@@ -12,7 +12,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function TradeHistoryTab() {
-  const { data: userTrades = [], isLoading } = useTradesData();
+  const { tradeHistory } = useAppData();
+  
+  // For now, we'll assume loading is complete if we have the context
+  // Later we can add loading/error states to the AppContext if needed
+  const isLoading = false;
+  const userTrades = tradeHistory;
 
   // Show last 50 trades
   const allTrades = userTrades.slice(0, 50);

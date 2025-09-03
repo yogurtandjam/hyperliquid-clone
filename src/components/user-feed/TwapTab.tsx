@@ -1,6 +1,6 @@
 "use client";
 
-import { useTwapData } from "@/hooks/useTwapData";
+import { useInitialTwapData } from "@/hooks/useInitialTwapData";
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function TwapTab() {
-  const { data: twapData, isLoading, error } = useTwapData(24); // Last 24 hours
+  const { data: twapData, isLoading, error } = useInitialTwapData(24); // Last 24 hours
 
   if (isLoading) {
     return (
@@ -42,7 +42,9 @@ export function TwapTab() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <p className="text-sm text-gray-400">Time-Weighted Average Price</p>
+                  <p className="text-sm text-gray-400">
+                    Time-Weighted Average Price
+                  </p>
                   <p className="text-2xl font-mono text-green-400">
                     ${twapData.twap}
                   </p>
@@ -105,7 +107,9 @@ export function TwapTab() {
                   </TableCell>
                   <TableCell className="text-right font-mono">
                     {twapData.trades > 0
-                      ? (parseFloat(twapData.volume) / twapData.trades).toFixed(4)
+                      ? (parseFloat(twapData.volume) / twapData.trades).toFixed(
+                          4,
+                        )
                       : "0"}
                   </TableCell>
                   <TableCell className="text-right text-gray-400">
