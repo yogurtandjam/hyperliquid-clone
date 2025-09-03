@@ -1,10 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import {
-  createAgentExchangeClient,
-  hyperliquidApi,
-} from "@/services/hyperliquidApi";
+import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { useEffect } from "react";
 import { useUserAgent } from "./useUserAgent";
 import { useAppData } from "@/contexts/AppContext";

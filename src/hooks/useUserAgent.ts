@@ -178,7 +178,6 @@ export function useUserAgent(): UseUserAgentReturn {
           owner: address as `0x${string}`,
           createdAt: Date.now(),
         });
-        createAgentExchangeClient({ agentPrivateKey: rec.privateKey });
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
         setCreateUserAgentError(e);
@@ -213,7 +212,6 @@ export function useUserAgent(): UseUserAgentReturn {
           owner: address as `0x${string}`,
           createdAt: Date.now(),
         });
-        createAgentExchangeClient({ agentPrivateKey: rec.privateKey });
       } catch (err) {
         const e = err instanceof Error ? err : new Error(String(err));
         setCreateUserAgentError(e);
@@ -227,9 +225,7 @@ export function useUserAgent(): UseUserAgentReturn {
 
   const userAgentClient = useMemo((): hl.ExchangeClient => {
     if (!isUserAgentCreated) {
-      throw new Error(
-        "No local user agent found. Create or connect one first.",
-      );
+      console.error("No local user agent found. Create or connect one first.");
     }
 
     const rec = readAgentRecord(address);

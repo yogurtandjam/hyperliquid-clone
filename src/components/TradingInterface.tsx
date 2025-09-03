@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +29,13 @@ interface OrderFormData {
 }
 
 export function TradingInterface() {
-  const { selectedSymbol, selectedAsset, balanceData } = useAppData();
+  const {
+    selectedSymbol,
+    selectedAsset,
+    balanceData,
+    recentTrades,
+    orderBook,
+  } = useAppData();
   const { isUserAgentCreated } = useUserAgent();
   const {
     placeMarketOrder,
@@ -38,28 +44,35 @@ export function TradingInterface() {
     isPlacingLimitOrder,
     isTrading,
   } = useTrading();
-
   const [orderData, setOrderData] = useState<OrderFormData>({
     orderType: "market",
     side: "buy",
     size: "",
-    price: "44.477",
-    slippage: 8.0,
+    price: orderBook?.asks[0]?.price ?? "",
+    slippage: 5.0,
     availableBalance: balanceData?.availableBalance || "0.00",
   });
 
   const [percentageAmount, setPercentageAmount] = useState<number[]>([0]);
 
+  useEffect(() => {
+    if (!orderBook) return;
+    setOrderData((p) => ({
+      ...p,
+      price:
+        orderData.side === "buy"
+          ? orderBook.asks[0]?.price
+          : orderBook.bids[0].price,
+    }));
+  }, [orderBook, orderBook?.asks, orderBook?.bids, orderData.side]);
   const handleSideChange = (side: "buy" | "sell") => {
     setOrderData((prev) => ({ ...prev, side }));
   };
 
-  const handleOrderTypeChange = (orderType: "market" | "limit" | "pro") => {
-    setOrderData((prev) => ({ ...prev, orderType }));
-  };
+  const handleSliderChange = (value: number[]) => {
+    setPercentageAmount(value);
+    const percentage = value[0];
 
-  const handlePercentageClick = (percentage: number) => {
-    setPercentageAmount([percentage]);
     // Calculate size based on percentage of available balance
     const availableBalance = parseFloat(balanceData?.availableBalance || "0");
     const currentPrice = parseFloat(orderData.price) || 0;
@@ -80,7 +93,16 @@ export function TradingInterface() {
         ).toFixed(4);
       }
     }
+    console.log("caultuated isze", calculatedSize);
     setOrderData((prev) => ({ ...prev, size: calculatedSize }));
+  };
+
+  const handleOrderTypeChange = (orderType: "market" | "limit" | "pro") => {
+    setOrderData((prev) => ({
+      ...prev,
+      orderType,
+      price: recentTrades[0]?.price,
+    }));
   };
 
   const calculateOrderValue = () => {
@@ -161,28 +183,28 @@ export function TradingInterface() {
         </TabsList>
 
         {/* Buy/Sell Toggle */}
-        <div className="grid grid-cols-2 gap-2 mb-6">
+        <div className="flex rounded-lg overflow-hidden mb-6 bg-gray-800">
           <Button
-            variant={orderData.side === "buy" ? "default" : "outline"}
+            variant="ghost"
             onClick={() => handleSideChange("buy")}
-            className={`buy-button ${
+            className={`flex-1 rounded-none border-0 font-semibold transition-all duration-200 ${
               orderData.side === "buy"
-                ? ""
-                : "border-gray-600 text-gray-300 hover:bg-teal-600/20"
+                ? "bg-teal-500 text-white hover:bg-teal-600"
+                : "bg-transparent text-gray-300 hover:bg-teal-500/20 hover:text-teal-300"
             }`}
           >
-            Buy
+            Buy / Long
           </Button>
           <Button
-            variant={orderData.side === "sell" ? "default" : "outline"}
+            variant="ghost"
             onClick={() => handleSideChange("sell")}
-            className={`sell-button ${
+            className={`flex-1 rounded-none border-0 font-semibold transition-all duration-200 ${
               orderData.side === "sell"
-                ? ""
-                : "border-gray-600 text-gray-300 hover:bg-red-600/20"
+                ? "bg-red-400 text-white hover:bg-red-600"
+                : "bg-transparent text-gray-300 hover:bg-red-400/20 hover:text-red-300"
             }`}
           >
-            Sell
+            Sell / Short
           </Button>
         </div>
 
@@ -191,8 +213,7 @@ export function TradingInterface() {
             orderData={orderData}
             setOrderData={setOrderData}
             percentageAmount={percentageAmount}
-            setPercentageAmount={setPercentageAmount}
-            handlePercentageClick={handlePercentageClick}
+            handleSliderChange={handleSliderChange}
           />
         </TabsContent>
 
@@ -201,14 +222,13 @@ export function TradingInterface() {
             orderData={orderData}
             setOrderData={setOrderData}
             percentageAmount={percentageAmount}
-            setPercentageAmount={setPercentageAmount}
-            handlePercentageClick={handlePercentageClick}
+            handleSliderChange={handleSliderChange}
           />
         </TabsContent>
       </Tabs>
 
       {/* Available Balance */}
-      <div className="flex items-center justify-between text-sm mb-4">
+      <div className="flex items-center justify-between text-sm my-4">
         <span className="text-gray-400">Available to Trade</span>
         <span className="text-white">
           {balanceData?.availableBalance || "0.00"} USDC
@@ -242,8 +262,10 @@ export function TradingInterface() {
 
       {/* Submit Button */}
       <Button
-        className={`w-full h-12 font-semibold ${
-          orderData.side === "buy" ? "buy-button" : "sell-button"
+        className={`w-full h-12 font-semibold transition-all duration-200 ${
+          orderData.side === "buy"
+            ? "bg-teal-500 hover:bg-teal-600 text-white"
+            : "bg-red-400 hover:bg-red-600 text-white"
         }`}
         disabled={
           !orderData.size || parseFloat(orderData.size) <= 0 || isTrading
@@ -271,14 +293,12 @@ function MarketOrderForm({
   orderData,
   setOrderData,
   percentageAmount,
-  setPercentageAmount,
-  handlePercentageClick,
+  handleSliderChange,
 }: {
   orderData: OrderFormData;
   setOrderData: React.Dispatch<React.SetStateAction<OrderFormData>>;
   percentageAmount: number[];
-  setPercentageAmount: React.Dispatch<React.SetStateAction<number[]>>;
-  handlePercentageClick: (percentage: number) => void;
+  handleSliderChange: (value: number[]) => void;
 }) {
   const { selectedSymbol } = useAppData();
   return (
@@ -307,24 +327,11 @@ function MarketOrderForm({
       <div className="space-y-3">
         <Slider
           value={percentageAmount}
-          onValueChange={setPercentageAmount}
+          onValueChange={handleSliderChange}
           max={100}
           step={1}
           className="w-full"
         />
-        <div className="flex items-center justify-between text-xs">
-          {[0, 25, 50, 75, 100].map((percentage) => (
-            <Button
-              key={percentage}
-              variant="ghost"
-              size="sm"
-              onClick={() => handlePercentageClick(percentage)}
-              className="h-6 px-2 text-xs text-gray-400 hover:text-white"
-            >
-              {percentage}%
-            </Button>
-          ))}
-        </div>
       </div>
     </>
   );
@@ -334,8 +341,7 @@ function LimitOrderForm(props: {
   orderData: OrderFormData;
   setOrderData: React.Dispatch<React.SetStateAction<OrderFormData>>;
   percentageAmount: number[];
-  setPercentageAmount: React.Dispatch<React.SetStateAction<number[]>>;
-  handlePercentageClick: (percentage: number) => void;
+  handleSliderChange: (value: number[]) => void;
 }) {
   return (
     <>
