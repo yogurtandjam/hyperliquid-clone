@@ -28,7 +28,7 @@
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
-  scrollbar-width: none;  /* Firefox, Safari 18.2+, Chromium 121+ */
+  scrollbar-width: none; /* Firefox, Safari 18.2+, Chromium 121+ */
 }
 
 @layer base {
@@ -46,11 +46,11 @@
   }
 
   .buy-button {
-    @apply bg-teal-600 hover:bg-teal-700 text-white;
+    @apply bg-teal-500 hover:bg-teal-600 text-white;
   }
 
   .sell-button {
-    @apply bg-red-600 hover:bg-red-700 text-white;
+    @apply bg-red-400 hover:bg-red-600 text-white;
   }
 
   .price-up {
@@ -116,7 +116,7 @@
     height: 20px;
     bottom: 0;
     right: 0;
-    background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxnIGZpbGw9IiM0QTVCNjgiPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjEiLz4KICAgIDxjaXJjbGUgY3g9IjMiIGN5PSIwIiByPSIxIi8+CiAgICA8Y2lyY2xlIGN4PSIwIiBjeT0iMyIgcj0iMSIvPgogICAgPGNpcmNsZSBjeD0iMyIgY3k9IjMiIHI9IjEiLz4KICA8L2c+Cjwvc3ZnPg==');
+    background: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxnIGZpbGw9IiM0QTVCNjgiPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjEiLz4KICAgIDxjaXJjbGUgY3g9IjMiIGN5PSIwIiByPSIxIi8+CiAgICA8Y2lyY2xlIGN4PSIwIiBjeT0iMyIgcj0iMSIvPgogICAgPGNpcmNsZSBjeD0iMyIgY3k9IjMiIHI9IjEiLz4KICA8L2c+Cjwvc3ZnPg==");
     background-position: bottom right;
     padding: 0 3px 3px 0;
     background-repeat: no-repeat;
@@ -171,4 +171,3 @@
 .element::-webkit-scrollbar {
   display: none;
 }
-

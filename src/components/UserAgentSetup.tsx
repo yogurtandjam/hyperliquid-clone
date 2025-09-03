@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useUserAgent } from "@/hooks/useUserAgent";
 import { useAccount, useSignMessage } from "wagmi";
+import { privateKeyToAccount } from "viem/accounts";
 
 /**
  * Updated to align with HL frontend behavior + server registration:
@@ -47,6 +48,7 @@ export function UserAgentSetup() {
     clearUserAgent,
     isCreatingUserAgent,
     createUserAgentError,
+    getLocalAgentRecord,
   } = useUserAgent();
 
   const isValidHexPk = useCallback(
@@ -130,11 +132,20 @@ export function UserAgentSetup() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mb-2">
               <User className="h-4 w-4 text-green-600" />
               <span className="font-medium text-green-800 dark:text-green-200">
                 Agent Name: {userAgentState.agentName}
               </span>
+            </div>
+            <div className="text-xs text-green-700 dark:text-green-300 break-all">
+              Agent Address:{" "}
+              {(() => {
+                const record = getLocalAgentRecord();
+                return record?.privateKey
+                  ? privateKeyToAccount(record.privateKey).address
+                  : "Unknown";
+              })()}
             </div>
           </div>
 
@@ -161,11 +172,11 @@ export function UserAgentSetup() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto overflow-auto">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+        <CardTitle className="flex items-center space-x-2 justify-center">
           <Key className="h-5 w-5" />
-          <span>User Agent Setup</span>
+          <div>User Agent Setup</div>
         </CardTitle>
         <CardDescription>
           Create or connect a trading agent for on-chain order execution
@@ -260,10 +271,6 @@ export function UserAgentSetup() {
           <AlertDescription>
             Your wallet authorizes agent actions via signature. Your agent
             private key is managed locally and never sent to our servers.
-            <br />
-            <br />
-            <strong>Note:</strong> You must have funds deposited in your
-            Hyperliquid account before you can create or approve a user agent.
           </AlertDescription>
         </Alert>
 
@@ -302,6 +309,6 @@ export function UserAgentSetup() {
           </Button>
         </div>
       </CardContent>
-    </Card>
+    </div>
   );
 }

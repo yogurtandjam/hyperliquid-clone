@@ -1,3 +1,4 @@
+import { AgentRecord } from "@/hooks/useUserAgent";
 import { Candle } from "@nktkas/hyperliquid";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -143,3 +144,27 @@ export function inferDirection(
 }
 
 export const isHex64 = (v: string) => v.startsWith("0x") && v.length === 66;
+
+export const isTruthy = <T>(
+  value: T | null | undefined | false | "" | 0,
+): value is T => {
+  return Boolean(value);
+};
+
+export const AGENT_PREFIX = "hyperliquid_agent_";
+export const DEFAULT_KEY = "hyperliquid_agent_default";
+export const LAST_ACTIVE_VAULT = "hyperliquid.last_active_vault_or_sub_account"; // maintained for parity
+
+export const readAgentRecord = (
+  owner: string | undefined | null,
+): AgentRecord | null => {
+  if (!owner) return null;
+  try {
+    const raw =
+      localStorage.getItem(`${AGENT_PREFIX}${owner}`) ||
+      localStorage.getItem(DEFAULT_KEY);
+    return raw ? (JSON.parse(raw) as AgentRecord) : null;
+  } catch {
+    return null;
+  }
+};
