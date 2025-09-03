@@ -14,7 +14,7 @@ import {
 import { usePrivy } from "@privy-io/react-auth";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { formatters, toNumSafe } from "@/lib/utils";
-import { useMarketData } from "@/contexts/AppContext";
+import { useAppData } from "@/contexts/AppContext";
 import { num } from "./shared";
 
 export type Bal = {
@@ -29,7 +29,7 @@ export type Bal = {
 };
 
 export function BalancesTab() {
-  const { balanceData } = useMarketData();
+  const { balanceData } = useAppData();
 
   // Create balance row from webData2 clearingHouseState
   const balances: Bal[] = balanceData

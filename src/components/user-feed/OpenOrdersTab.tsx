@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { usePrivy } from "@privy-io/react-auth";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { formatters, toNumSafe } from "@/lib/utils";
-import { useMarketData } from "@/contexts/AppContext";
+import { useAppData } from "@/contexts/AppContext";
 import {
   Table,
   TableBody,
@@ -29,7 +29,7 @@ interface Order {
 }
 
 export function OpenOrdersTab() {
-  const { openOrders } = useMarketData();
+  const { openOrders } = useAppData();
 
   // Convert orders from context to display format
   const orders: Order[] = openOrders.map((order) => {

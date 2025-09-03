@@ -5,6 +5,7 @@ import { useAppData } from "@/contexts/AppContext";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { usePrivy } from "@privy-io/react-auth";
 import { Address } from "viem";
+import { QueryKeys } from "@/types";
 
 export function useTwapData(hours: number = 24) {
   const { twapData, setTwapData } = useAppData();
@@ -15,7 +16,7 @@ export function useTwapData(hours: number = 24) {
   const startTime = endTime - hours * 60 * 60;
 
   const query = useQuery({
-    queryKey: ["twapData", userAddress, hours],
+    queryKey: [QueryKeys.TwapData, userAddress, hours],
     queryFn: async () => {
       if (!userAddress) {
         throw new Error("User address not available");

@@ -1,3 +1,9 @@
+import {
+  FrontendOrder,
+  OrderStatus,
+  UserFundingUpdate,
+} from "@nktkas/hyperliquid";
+
 export type MarketData = {
   [symbol: string]: {
     price: string;
@@ -64,23 +70,6 @@ export type OpenOrder = {
   reduceOnly?: boolean;
 };
 
-export type OrderHistoryItem = {
-  coin: string;
-  side: "buy" | "sell";
-  px: string;
-  sz: string;
-  time: number;
-  fee: string;
-  closedPnl?: string;
-};
-
-export type FundingHistoryItem = {
-  coin: string;
-  fundingRate: string;
-  premium: string;
-  time: number;
-};
-
 export type TwapData = {
   twap: string;
   volume: string;
@@ -99,22 +88,22 @@ export type AppDataContextType = {
   isConnected: boolean;
   refreshData: () => void;
   availableAssets: Asset[];
-  
+
   // User data (WebSocket)
   balanceData: BalanceData | null;
   positions: Position[];
   openOrders: OpenOrder[];
-  
+
   // Historical data (HTTP/useQuery)
   tradeHistory: Trade[];
-  orderHistory: OrderHistoryItem[];
-  fundingHistory: FundingHistoryItem[];
+  orderHistory: OrderStatus<FrontendOrder>[];
+  fundingHistory: UserFundingUpdate[];
   twapData: TwapData | null;
-  
+
   // State update methods for historical data
   setTradeHistory: (trades: Trade[]) => void;
-  setOrderHistory: (orders: OrderHistoryItem[]) => void;
-  setFundingHistory: (funding: FundingHistoryItem[]) => void;
+  setOrderHistory: (orders: OrderStatus<FrontendOrder>[]) => void;
+  setFundingHistory: (funding: UserFundingUpdate[]) => void;
   setTwapData: (twap: TwapData | null) => void;
 };
 
@@ -135,4 +124,7 @@ export type OpenOrdersSetter = React.Dispatch<
 
 export enum QueryKeys {
   Trades = "Trades",
+  OrderHistory = "OrderHistory",
+  FundingHistory = "FundingHistory",
+  TwapData = "TwapData",
 }

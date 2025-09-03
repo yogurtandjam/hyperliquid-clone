@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { formatters, toNumSafe } from "@/lib/utils";
-import { useMarketData } from "@/contexts/AppContext";
+import { useAppData } from "@/contexts/AppContext";
 import { getUserState, num } from "./shared";
 import {
   Table,
@@ -28,7 +28,7 @@ type Pos = {
 };
 
 export function PositionsTab() {
-  const { positions, marketData } = useMarketData();
+  const { positions, marketData } = useAppData();
 
   // Convert positions from context to display format - use preformatted strings
   const rows: Pos[] = positions.map((pos) => {

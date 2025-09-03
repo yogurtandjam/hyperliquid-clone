@@ -17,12 +17,12 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { ChevronDown, Star, Check } from "lucide-react";
-import { useMarketData } from "@/contexts/AppContext";
+import { useAppData } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
 
 export function TickerSelector() {
   const { marketData, selectedSymbol, setSelectedSymbol, availableAssets } =
-    useMarketData();
+    useAppData();
   const [open, setOpen] = useState(false);
 
   const handleAssetSelect = (symbol: string) => {

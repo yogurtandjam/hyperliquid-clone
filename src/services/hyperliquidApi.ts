@@ -160,14 +160,14 @@ export const hyperliquidApi = {
   },
 
   getFundingHistory: async (
-    coin: string,
+    user: string,
     startTime: number,
     endTime?: number,
   ) => {
     try {
       await infoLimiter.take(1);
-      if (typeof infoClient.fundingHistory === "function") {
-        return await infoClient.fundingHistory({ coin, startTime, endTime });
+      if (typeof infoClient.userFunding === "function") {
+        return await infoClient.userFunding({ user, startTime, endTime });
       }
       throw new Error("No funding history method on client");
     } catch (err) {
