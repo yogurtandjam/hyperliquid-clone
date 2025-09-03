@@ -7,7 +7,7 @@ import { Address } from "viem";
 import { QueryKeys } from "@/types";
 import { FrontendOrder, OrderStatus } from "@nktkas/hyperliquid";
 
-export function useOrderHistory(
+export function useInitialOrderHistory(
   setOrderHistory: (orderHistory: OrderStatus<FrontendOrder>[]) => void
 ) {
   const { user, authenticated } = usePrivy();

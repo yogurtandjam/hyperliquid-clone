@@ -3,9 +3,9 @@
 import { useWebSocketSubscriptions } from "@/hooks/useWebSocketSubscriptions";
 import { useInitialMarketData } from "@/hooks/useInitialMarketData";
 import { useInitialOrderBook } from "@/hooks/useInitialOrderBook";
-import { useFundingHistory } from "@/hooks/useFundingHistory";
-import { useOrderHistory } from "@/hooks/useOrderHistory";
-import { useTradesData } from "@/hooks/useTradesData";
+import { useInitialFundingHistory } from "@/hooks/useFundingHistory";
+import { useInitialOrderHistory } from "@/hooks/useOrderHistory";
+import { useInitialTradesData } from "@/hooks/useTradesData";
 import { formatters } from "@/lib/utils";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import {
@@ -89,9 +89,9 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
   });
 
   // Use individual hooks with setter injection (no circular dependency)
-  useFundingHistory(7, setFundingHistory);
-  useOrderHistory(setOrderHistory);
-  useTradesData(setTradeHistory);
+  useInitialFundingHistory(7, setFundingHistory);
+  useInitialOrderHistory(setOrderHistory);
+  useInitialTradesData(setTradeHistory);
 
   // Use consolidated WebSocket subscriptions hook
   useWebSocketSubscriptions({

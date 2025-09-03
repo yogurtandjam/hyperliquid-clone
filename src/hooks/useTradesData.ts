@@ -4,7 +4,7 @@ import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { formatters } from "@/lib/utils";
 import { QueryKeys, Trade } from "@/types";
 
-export const useTradesData = (setTradeHistory: (trades: Trade[]) => void) => {
+export const useInitialTradesData = (setTradeHistory: (trades: Trade[]) => void) => {
   const { user } = usePrivy();
 
   const query = useQuery({

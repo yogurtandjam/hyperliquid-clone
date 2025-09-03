@@ -6,7 +6,7 @@ import { UserFundingUpdate } from "@nktkas/hyperliquid";
 import { usePrivy } from "@privy-io/react-auth";
 import { useQuery } from "@tanstack/react-query";
 
-export function useFundingHistory(
+export function useInitialFundingHistory(
   days: number = 7,
   setFundingHistory: (fundingHistory: UserFundingUpdate[]) => void,
 ) {
