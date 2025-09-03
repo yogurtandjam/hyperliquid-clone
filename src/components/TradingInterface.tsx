@@ -260,9 +260,7 @@ export function TradingInterface() {
               : "Processing..."}
           </>
         ) : (
-          `${orderData.side === "buy" ? "Buy" : "Sell"} ${
-            selectedSymbol || "HYPE"
-          }`
+          `${orderData.side === "buy" ? "Buy" : "Sell"} ${selectedSymbol}`
         )}
       </Button>
     </div>
@@ -282,6 +280,7 @@ function MarketOrderForm({
   setPercentageAmount: React.Dispatch<React.SetStateAction<number[]>>;
   handlePercentageClick: (percentage: number) => void;
 }) {
+  const { selectedSymbol } = useAppData();
   return (
     <>
       <div className="space-y-2">
@@ -299,7 +298,7 @@ function MarketOrderForm({
             className="bg-gray-800 border-gray-600 text-white pr-16"
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-            HYPE
+            {selectedSymbol}
           </div>
         </div>
       </div>
