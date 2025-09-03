@@ -73,7 +73,8 @@
   }
 
   .trading-panel {
-    @apply bg-gray-900/50 border border-gray-800 rounded-lg p-4;
+    background-color: #0f1a1f;
+    @apply rounded-lg p-2 h-full w-full;
   }
 
   .scrollbar-thin {
@@ -92,5 +93,76 @@
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: #374151;
     border-radius: 3px;
+  }
+
+  /* React Grid Layout Styles */
+  .react-grid-layout {
+    position: relative;
+  }
+
+  .react-grid-item {
+    transition: all 200ms ease;
+    transition-property: left, top;
+  }
+
+  .react-grid-item.cssTransforms {
+    transition-property: transform;
+  }
+
+  .react-grid-item > .react-resizable-handle {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    bottom: 0;
+    right: 0;
+    background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNiIgaGVpZ2h0PSI2IiB2aWV3Qm94PSIwIDAgNiA2IiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxnIGZpbGw9IiM0QTVCNjgiPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjEiLz4KICAgIDxjaXJjbGUgY3g9IjMiIGN5PSIwIiByPSIxIi8+CiAgICA8Y2lyY2xlIGN4PSIwIiBjeT0iMyIgcj0iMSIvPgogICAgPGNpcmNsZSBjeD0iMyIgY3k9IjMiIHI9IjEiLz4KICA8L2c+Cjwvc3ZnPg==');
+    background-position: bottom right;
+    padding: 0 3px 3px 0;
+    background-repeat: no-repeat;
+    background-origin: content-box;
+    box-sizing: border-box;
+    cursor: se-resize;
+    z-index: 10;
+  }
+
+  .react-grid-item > .react-resizable-handle::after {
+    content: "";
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 5px;
+    height: 5px;
+    border-right: 2px solid #6b7280;
+    border-bottom: 2px solid #6b7280;
+  }
+
+  .react-grid-item.react-grid-placeholder {
+    background: rgba(20, 184, 166, 0.1);
+    opacity: 0.2;
+    transition-duration: 100ms;
+    z-index: 2;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    border: 1px dashed rgba(20, 184, 166, 0.4);
+  }
+
+  .react-grid-item.react-draggable-dragging {
+    transition: none;
+    z-index: 3;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  }
+
+  .react-grid-item.react-grid-item-resizing {
+    z-index: 3;
+  }
+
+  /* Ensure grid items fill their containers properly */
+  .react-grid-item > div {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
   }
 }

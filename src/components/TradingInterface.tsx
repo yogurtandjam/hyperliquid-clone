@@ -4,10 +4,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/custom-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Info, Settings } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 
 interface OrderFormData {
   orderType: "market" | "limit" | "pro";
@@ -25,24 +31,27 @@ export function TradingInterface() {
     size: "",
     price: "44.477",
     slippage: 8.0,
-    availableBalance: "0.00"
+    availableBalance: "0.00",
   });
 
   const [percentageAmount, setPercentageAmount] = useState<number[]>([0]);
 
   const handleSideChange = (side: "buy" | "sell") => {
-    setOrderData(prev => ({ ...prev, side }));
+    setOrderData((prev) => ({ ...prev, side }));
   };
 
   const handleOrderTypeChange = (orderType: "market" | "limit" | "pro") => {
-    setOrderData(prev => ({ ...prev, orderType }));
+    setOrderData((prev) => ({ ...prev, orderType }));
   };
 
   const handlePercentageClick = (percentage: number) => {
     setPercentageAmount([percentage]);
     // Calculate size based on percentage of available balance
-    const calculatedSize = (parseFloat(orderData.availableBalance) * percentage / 100).toFixed(4);
-    setOrderData(prev => ({ ...prev, size: calculatedSize }));
+    const calculatedSize = (
+      (parseFloat(orderData.availableBalance) * percentage) /
+      100
+    ).toFixed(4);
+    setOrderData((prev) => ({ ...prev, size: calculatedSize }));
   };
 
   const calculateOrderValue = () => {
@@ -58,20 +67,21 @@ export function TradingInterface() {
   return (
     <div className="trading-panel">
       {/* Order Type Tabs */}
-      <Tabs value={orderData.orderType} onValueChange={(value: string) => handleOrderTypeChange(value as "market" | "limit" | "pro")}>
-        <TabsList className="grid w-full grid-cols-3 bg-gray-800 mb-4">
-          <TabsTrigger value="market" className="data-[state=active]:bg-teal-600">
-            Market
-          </TabsTrigger>
-          <TabsTrigger value="limit" className="data-[state=active]:bg-teal-600">
-            Limit
-          </TabsTrigger>
-          <TabsTrigger value="pro" className="data-[state=active]:bg-teal-600 relative">
-            Pro
-            <Badge variant="secondary" className="ml-1 h-4 text-xs">
-              <Settings className="h-3 w-3" />
-            </Badge>
-          </TabsTrigger>
+      <Tabs
+        value={orderData.orderType}
+        onValueChange={(value: string) =>
+          handleOrderTypeChange(value as "market" | "limit" | "pro")
+        }
+      >
+        <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsTrigger value="market">Market</TabsTrigger>
+          <TabsTrigger value="limit">Limit</TabsTrigger>
+          <Popover>
+            <PopoverTrigger className="border-b-2 border-b-gray-600 py-1.5 px-3 text-sm">
+              Pro
+            </PopoverTrigger>
+            <PopoverContent>Coming soon...</PopoverContent>
+          </Popover>
         </TabsList>
 
         {/* Buy/Sell Toggle */}
@@ -79,14 +89,22 @@ export function TradingInterface() {
           <Button
             variant={orderData.side === "buy" ? "default" : "outline"}
             onClick={() => handleSideChange("buy")}
-            className={`buy-button ${orderData.side === "buy" ? "" : "border-gray-600 text-gray-300 hover:bg-teal-600/20"}`}
+            className={`buy-button ${
+              orderData.side === "buy"
+                ? ""
+                : "border-gray-600 text-gray-300 hover:bg-teal-600/20"
+            }`}
           >
             Buy
           </Button>
           <Button
             variant={orderData.side === "sell" ? "default" : "outline"}
             onClick={() => handleSideChange("sell")}
-            className={`sell-button ${orderData.side === "sell" ? "" : "border-gray-600 text-gray-300 hover:bg-red-600/20"}`}
+            className={`sell-button ${
+              orderData.side === "sell"
+                ? ""
+                : "border-gray-600 text-gray-300 hover:bg-red-600/20"
+            }`}
           >
             Sell
           </Button>
@@ -111,16 +129,6 @@ export function TradingInterface() {
             handlePercentageClick={handlePercentageClick}
           />
         </TabsContent>
-
-        <TabsContent value="pro" className="space-y-4">
-          <ProOrderForm
-            orderData={orderData}
-            setOrderData={setOrderData}
-            percentageAmount={percentageAmount}
-            setPercentageAmount={setPercentageAmount}
-            handlePercentageClick={handlePercentageClick}
-          />
-        </TabsContent>
       </Tabs>
 
       {/* Available Balance */}
@@ -133,11 +141,17 @@ export function TradingInterface() {
       <div className="space-y-2 text-sm mb-6">
         <div className="flex items-center justify-between">
           <span className="text-gray-400">Order Value</span>
-          <span className="text-white">{calculateOrderValue() === "0.00" ? "N/A" : `$${calculateOrderValue()}`}</span>
+          <span className="text-white">
+            {calculateOrderValue() === "0.00"
+              ? "N/A"
+              : `$${calculateOrderValue()}`}
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-gray-400">Slippage</span>
-          <span className="text-white">Est: {estimatedSlippage()} / Max: {orderData.slippage}%</span>
+          <span className="text-white">
+            Est: {estimatedSlippage()} / Max: {orderData.slippage}%
+          </span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1">
@@ -166,7 +180,7 @@ function MarketOrderForm({
   setOrderData,
   percentageAmount,
   setPercentageAmount,
-  handlePercentageClick
+  handlePercentageClick,
 }: {
   orderData: OrderFormData;
   setOrderData: React.Dispatch<React.SetStateAction<OrderFormData>>;
@@ -177,13 +191,17 @@ function MarketOrderForm({
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="size" className="text-gray-300">Size</Label>
+        <Label htmlFor="size" className="text-gray-300">
+          Size
+        </Label>
         <div className="relative">
           <Input
             id="size"
             placeholder="0"
             value={orderData.size}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOrderData((prev) => ({ ...prev, size: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setOrderData((prev) => ({ ...prev, size: e.target.value }))
+            }
             className="bg-gray-800 border-gray-600 text-white pr-16"
           />
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -229,12 +247,19 @@ function LimitOrderForm(props: {
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="limit-price" className="text-gray-300">Price</Label>
+        <Label htmlFor="limit-price" className="text-gray-300">
+          Price
+        </Label>
         <Input
           id="limit-price"
           placeholder="44.477"
           value={props.orderData.price}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => props.setOrderData((prev: OrderFormData) => ({ ...prev, price: e.target.value }))}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            props.setOrderData((prev: OrderFormData) => ({
+              ...prev,
+              price: e.target.value,
+            }))
+          }
           className="bg-gray-800 border-gray-600 text-white"
         />
       </div>
@@ -254,7 +279,9 @@ function ProOrderForm(props: {
     <>
       <LimitOrderForm {...props} />
       <div className="space-y-2">
-        <Label htmlFor="stop-loss" className="text-gray-300">Stop Loss</Label>
+        <Label htmlFor="stop-loss" className="text-gray-300">
+          Stop Loss
+        </Label>
         <Input
           id="stop-loss"
           placeholder="Optional"
@@ -262,7 +289,9 @@ function ProOrderForm(props: {
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="take-profit" className="text-gray-300">Take Profit</Label>
+        <Label htmlFor="take-profit" className="text-gray-300">
+          Take Profit
+        </Label>
         <Input
           id="take-profit"
           placeholder="Optional"

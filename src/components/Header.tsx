@@ -48,7 +48,6 @@ export function Header() {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
-  console.log("ready", ready);
   const walletAddress = user?.wallet?.address;
 
   return (

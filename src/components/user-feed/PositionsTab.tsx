@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
-import { formatters, hyperliquidApi } from "@/services/hyperliquidApi";
+import { hyperliquidApi } from "@/services/hyperliquidApi";
+import { formatters } from "@/lib/utils";
 import { getUserState, num } from "./shared";
 
 type Pos = {

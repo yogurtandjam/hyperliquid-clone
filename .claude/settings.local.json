@@ -6,7 +6,9 @@
       "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
       "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
       "Read(/Users/yogurtandjam/projects/hyperliquid-ui-starter/components/user-feed/**)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm install:*)"
     ],
     "deny": [],
     "ask": []

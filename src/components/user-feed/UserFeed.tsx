@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/custom-tabs";
 import { Button } from "@/components/ui/button";
 import { Filter } from "lucide-react";
 import { usePrivy } from "@privy-io/react-auth";
@@ -39,9 +44,12 @@ export function UserFeed() {
 
   return (
     <div className="trading-panel">
-      <Tabs value={selectedTab} onValueChange={(value) => setSelectedTab(value as TabKey)}>
-        <div className="flex items-center justify-between mb-4">
-          <TabsList className="bg-gray-800">
+      <Tabs
+        value={selectedTab}
+        onValueChange={(value) => setSelectedTab(value as TabKey)}
+      >
+        <div className="flex items-center justify-between mb-4 h-[34px] overflow-x-auto">
+          <TabsList className="flex-shrink-0">
             <TabsTrigger
               value="balances"
               className="data-[state=active]:bg-teal-600"
@@ -86,7 +94,9 @@ export function UserFeed() {
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex-1 border-b-2 border-b-gray-600 h-full" />
+
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <Button variant="ghost" size="sm" className="text-gray-400">
               <Filter className="h-4 w-4" />
             </Button>

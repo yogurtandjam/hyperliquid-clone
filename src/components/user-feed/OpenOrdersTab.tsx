@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { usePrivy } from "@privy-io/react-auth";
-import { formatters, hyperliquidApi } from "@/services/hyperliquidApi";
+import { hyperliquidApi } from "@/services/hyperliquidApi";
+import { formatters } from "@/lib/utils";
 
 interface Order {
   coin: string;

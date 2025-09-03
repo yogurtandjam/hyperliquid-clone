@@ -30,7 +30,7 @@ export function TickerSelector() {
     setOpen(false);
   };
   return (
-    <div className="flex items-center space-x-3">
+    <div className="flex items-center">
       <Button variant="ghost" size="sm" className="p-1">
         <Star className="h-4 w-4 text-gray-400" />
       </Button>
@@ -41,7 +41,7 @@ export function TickerSelector() {
             variant="ghost"
             role="combobox"
             aria-expanded={open}
-            className="w-auto justify-between hover:bg-gray-800 rounded px-3 py-2 transition-colors"
+            className="w-auto justify-between hover:bg-gray-800 rounded px-3 py-2 transition-colors ml-0"
           >
             <div className="flex items-center space-x-2">
               <div className="h-6 w-6 rounded-full bg-teal-500 flex items-center justify-center">
@@ -62,38 +62,35 @@ export function TickerSelector() {
             <CommandList>
               <CommandEmpty>No perpetual found.</CommandEmpty>
               <CommandGroup>
-                {availableAssets.map((symbol) => {
-                  const data = marketData[symbol];
-                  const price = data
-                    ? parseFloat(data.price).toFixed(symbol === "BTC" ? 0 : 3)
-                    : "0.000";
+                {availableAssets.map((asset) => {
+                  const data = marketData[asset.name];
                   const change = data?.changePercent24h || "0.00%";
 
                   return (
                     <CommandItem
-                      key={symbol}
-                      value={symbol}
-                      onSelect={() => handleAssetSelect(symbol)}
+                      key={asset.name}
+                      value={asset.name}
+                      onSelect={() => handleAssetSelect(asset.name)}
                       className="flex items-center justify-between p-3 hover:bg-gray-800 cursor-pointer"
                     >
                       <div className="flex items-center space-x-2">
                         <div className="h-5 w-5 rounded-full bg-teal-500 flex items-center justify-center">
                           <span className="text-xs font-bold text-white">
-                            {symbol.charAt(0)}
+                            {asset.name.charAt(0)}
                           </span>
                         </div>
-                        <span className="text-white">{symbol}-USD</span>
+                        <span className="text-white">{asset.name}-USD</span>
                         <Check
                           className={cn(
                             "ml-auto h-4 w-4",
-                            selectedSymbol === symbol
+                            selectedSymbol === asset.name
                               ? "opacity-100"
                               : "opacity-0",
                           )}
                         />
                       </div>
                       <div className="text-right">
-                        <div className="text-white">${price}</div>
+                        <div className="text-white">${data?.price}</div>
                         <div
                           className={`text-xs ${
                             change.startsWith("-")
