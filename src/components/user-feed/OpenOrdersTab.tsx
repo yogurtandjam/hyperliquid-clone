@@ -3,90 +3,122 @@ import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { usePrivy } from "@privy-io/react-auth";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
-import { formatters } from "@/lib/utils";
+import { formatters, toNumSafe } from "@/lib/utils";
+import { useMarketData } from "@/contexts/AppContext";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Order {
-  coin: string;
-  side: "buy" | "sell";
-  type: string;
-  size: string;
-  price: string;
-  filled: string;
-  status: "open" | "filled" | "cancelled";
   time: string;
+  type: string;
+  coin: string;
+  direction: "buy" | "sell";
+  size: string;
+  originalSize: string;
+  orderValue: string;
+  price: string;
+  reduceOnly: boolean;
+  triggerConditions: string;
 }
 
 export function OpenOrdersTab() {
-  const { user } = usePrivy();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { openOrders } = useMarketData();
 
-  useEffect(() => {
-    if (!user?.wallet?.address) return;
+  // Convert orders from context to display format
+  const orders: Order[] = openOrders.map((order) => {
+    const size = toNumSafe(order.sz) || 0;
+    const price = toNumSafe(order.px) || 0;
+    const orderValue = size * price;
 
-    const fetchOrders = async () => {
-      try {
-        const response = await hyperliquidApi.getUserOpenOrders(
-          user.wallet.address,
-        );
-        if (response) {
-          const mapped: Order[] = response.map((o: any) => ({
-            coin: String(o.coin ?? o.asset ?? ""),
-            side: String(o.side ?? (o.b ? "buy" : "sell")) as "buy" | "sell",
-            type: "Limit", // Most orders are limit orders
-            size: formatters.formatSize(o.sz ?? o.size ?? "0"),
-            price: formatters.formatPrice(o.px ?? o.price ?? "0"),
-            filled: formatters.formatSize("0"), // TODO: get filled amount
-            status: "open" as const,
-            time: formatters.formatTime(o.timestamp ?? Date.now()),
-          }));
-          setOrders(mapped);
-        }
-      } catch (error) {
-        console.error("Error fetching open orders:", error);
-      }
+    return {
+      time: formatters.formatTime(order.timestamp),
+      type: order.orderType === "limit" ? "Limit" : "Market",
+      coin: order.coin,
+      direction: order.side,
+      size: order.sz,
+      originalSize: order.origSz,
+      orderValue: `$${orderValue.toFixed(2)}`,
+      price: formatters.formatPrice(order.px),
+      reduceOnly: order.reduceOnly,
+      triggerConditions: "—", // TODO: Add trigger conditions when available
     };
-
-    fetchOrders();
-  }, [user?.wallet?.address]);
+  });
 
   return (
     <div className="space-y-4">
-      {orders.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">No open orders</div>
-      ) : (
-        <div className="space-y-2">
-          <div className="grid grid-cols-7 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700">
-            <div>Coin</div>
-            <div>Side</div>
-            <div>Type</div>
-            <div className="text-right">Size</div>
-            <div className="text-right">Price</div>
-            <div className="text-right">Filled</div>
-            <div className="text-right">Time</div>
-          </div>
-          {orders.map((order, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-7 gap-2 text-sm py-2 hover:bg-gray-800/50 rounded"
-            >
-              <div className="font-semibold text-white">{order.coin}</div>
-              <div>
-                <Badge
-                  variant={order.side === "buy" ? "default" : "destructive"}
-                  className="text-xs"
+      <ScrollArea className="h-80">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Time</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Coin</TableHead>
+              <TableHead>Direction</TableHead>
+              <TableHead className="text-right">Size</TableHead>
+              <TableHead className="text-right">Original Size</TableHead>
+              <TableHead className="text-right">Order Value</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead className="text-center">Reduce Only</TableHead>
+              <TableHead>Trigger Conditions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {orders.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={10}
+                  className="text-center py-8 text-gray-400"
                 >
-                  {order.side.toUpperCase()}
-                </Badge>
-              </div>
-              <div className="text-gray-300">{order.type}</div>
-              <div className="text-right text-white">{order.size}</div>
-              <div className="text-right text-white">{order.price}</div>
-              <div className="text-right text-gray-300">{order.filled}</div>
-              <div className="text-right text-gray-400">{order.time}</div>
-            </div>
-          ))}
-        </div>
-      )}
+                  No open orders
+                </TableCell>
+              </TableRow>
+            ) : (
+              orders.map((order, index) => (
+                <TableRow key={index} className="hover:bg-gray-800/50">
+                  <TableCell className="text-gray-400">{order.time}</TableCell>
+                  <TableCell className="text-gray-300">{order.type}</TableCell>
+                  <TableCell className="font-semibold">{order.coin}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        order.direction === "buy" ? "default" : "destructive"
+                      }
+                      className="text-xs"
+                    >
+                      {order.direction.toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{order.size}</TableCell>
+                  <TableCell className="text-right">
+                    {order.originalSize}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {order.orderValue}
+                  </TableCell>
+                  <TableCell className="text-right">{order.price}</TableCell>
+                  <TableCell className="text-center">
+                    {order.reduceOnly && (
+                      <Badge variant="outline" className="text-xs">
+                        RO
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-gray-400">
+                    {order.triggerConditions}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </ScrollArea>
     </div>
   );
 }

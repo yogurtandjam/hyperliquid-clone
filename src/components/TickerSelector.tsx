@@ -17,7 +17,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { ChevronDown, Star, Check } from "lucide-react";
-import { useMarketData } from "@/contexts/MarketDataContext";
+import { useMarketData } from "@/contexts/AppContext";
 import { cn } from "@/lib/utils";
 
 export function TickerSelector() {

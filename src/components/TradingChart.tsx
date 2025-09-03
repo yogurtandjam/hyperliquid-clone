@@ -24,7 +24,7 @@ import {
   CandlestickChart,
 } from "lucide-react";
 import { Candle } from "@nktkas/hyperliquid";
-import { useMarketData } from "@/contexts/MarketDataContext";
+import { useMarketData } from "@/contexts/AppContext";
 
 /* ---------------- Types ---------------- */
 type TFKey =

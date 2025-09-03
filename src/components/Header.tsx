@@ -51,17 +51,15 @@ export function Header() {
   const walletAddress = user?.wallet?.address;
 
   return (
-    <header className="border-b border-gray-800 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/75">
+    <header className="border-b border-gray-800 bg-gray-900/95 backdrop-blur supports-[backdrop-filter]:bg-gray-900/75 overflow-hidden">
       <div className="flex h-16 items-center justify-between px-6">
         {/* Logo and Navigation */}
         <div className="flex items-center space-x-8">
           <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded bg-teal-500 flex items-center justify-center">
+            <div className="h-5 w-5 rounded bg-teal-500 flex items-center justify-center">
               <span className="text-sm font-bold text-white">H</span>
             </div>
-            <span className="text-xl font-semibold text-white">
-              Hyperliquid
-            </span>
+            <span className="text-lg font-semibold text-white">Hypersolid</span>
           </div>
 
           <nav className="hidden md:flex items-center space-x-6">
@@ -70,10 +68,8 @@ export function Header() {
                 key={item.name}
                 href={item.href}
                 className={`header-nav ${
-                  item.active
-                    ? "text-white border-b-2 border-teal-500 pb-4"
-                    : ""
-                }`}
+                  item.active ? "text-teal-200" : ""
+                } text-sm`}
               >
                 {item.name}
               </a>
@@ -99,39 +95,19 @@ export function Header() {
         </div>
 
         {/* Right side actions */}
-        <div className="flex items-center space-x-4">
-          {/* Network indicator */}
-          <div className="flex items-center space-x-2">
-            <div className="h-2 w-2 rounded-full bg-teal-500"></div>
-            <span className="text-sm text-gray-300">Online</span>
-          </div>
-
-          {/* Settings and Globe */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white"
-          >
-            <Globe className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-300 hover:text-white"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-
+        <div className="flex items-center space-x-2">
           {/* Wallet Connection */}
           {!ready ? (
-            <Button disabled className="bg-gray-600 text-gray-400 px-6">
+            <Button disabled className="bg-gray-600 text-gray-400 px-3">
               Loading...
             </Button>
           ) : authenticated && walletAddress ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-6 flex items-center space-x-2">
+                <Button
+                  className=" hover:bg-teal-700 text-white font-medium px-3 flex items-center space-x-2"
+                  variant="outline"
+                >
                   <Wallet className="h-4 w-4" />
                   <span>{formatAddress(walletAddress)}</span>
                   <ChevronDown className="h-4 w-4" />
@@ -173,12 +149,28 @@ export function Header() {
           ) : (
             <Button
               onClick={handleConnect}
-              className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-6 flex items-center space-x-2"
+              className="bg-teal-600 hover:bg-teal-700 text-white font-medium px-3 flex items-center space-x-2"
             >
               <Wallet className="h-4 w-4" />
               <span>Connect</span>
             </Button>
           )}
+          {/* Settings and Globe */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 hover:text-white"
+          >
+            <Globe className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-300 hover:text-white"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
         </div>
       </div>
     </header>
