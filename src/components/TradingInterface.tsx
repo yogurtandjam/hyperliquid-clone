@@ -4,6 +4,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAppData } from "@/contexts/AppContext";
+import { useUserAgent } from "@/hooks/useUserAgent";
+import { useTrading } from "@/hooks/useTrading";
+import { UserAgentSetup } from "./UserAgentSetup";
 import {
   Tabs,
   TabsList,
@@ -25,13 +29,23 @@ interface OrderFormData {
 }
 
 export function TradingInterface() {
+  const { selectedSymbol, selectedAsset, balanceData } = useAppData();
+  const { isUserAgentCreated } = useUserAgent();
+  const { 
+    placeMarketOrder, 
+    placeLimitOrder, 
+    isPlacingMarketOrder, 
+    isPlacingLimitOrder,
+    isTrading 
+  } = useTrading();
+
   const [orderData, setOrderData] = useState<OrderFormData>({
     orderType: "market",
     side: "buy",
     size: "",
     price: "44.477",
     slippage: 8.0,
-    availableBalance: "0.00",
+    availableBalance: balanceData?.availableBalance || "0.00",
   });
 
   const [percentageAmount, setPercentageAmount] = useState<number[]>([0]);
@@ -47,10 +61,21 @@ export function TradingInterface() {
   const handlePercentageClick = (percentage: number) => {
     setPercentageAmount([percentage]);
     // Calculate size based on percentage of available balance
-    const calculatedSize = (
-      (parseFloat(orderData.availableBalance) * percentage) /
-      100
-    ).toFixed(4);
+    const availableBalance = parseFloat(balanceData?.availableBalance || "0");
+    const currentPrice = parseFloat(orderData.price) || 0;
+    
+    let calculatedSize = "0";
+    if (currentPrice > 0) {
+      // For buy orders, calculate size based on USDC balance / price
+      // For sell orders, this would need to be based on position size
+      if (orderData.side === "buy") {
+        const usdcAmount = (availableBalance * percentage) / 100;
+        calculatedSize = (usdcAmount / currentPrice).toFixed(4);
+      } else {
+        // For sell orders, you'd need position data
+        calculatedSize = ((availableBalance * percentage) / 100 / currentPrice).toFixed(4);
+      }
+    }
     setOrderData((prev) => ({ ...prev, size: calculatedSize }));
   };
 
@@ -63,6 +88,46 @@ export function TradingInterface() {
   const estimatedSlippage = () => {
     return orderData.orderType === "market" ? "0%" : "N/A";
   };
+
+  const handleSubmitOrder = async () => {
+    if (!selectedSymbol || !selectedAsset || !orderData.size || !isUserAgentCreated) {
+      return;
+    }
+
+    const sz = orderData.size; // Keep as string for API
+    const is_buy = orderData.side === "buy";
+    const asset = selectedAsset.index || 0; // Use asset index from selectedAsset
+
+    try {
+      if (orderData.orderType === "market") {
+        placeMarketOrder({
+          asset,
+          is_buy,
+          sz,
+        });
+      } else if (orderData.orderType === "limit") {
+        const limit_px = orderData.price; // Keep as string for API
+        placeLimitOrder({
+          asset,
+          is_buy,
+          sz,
+          limit_px,
+        });
+      }
+    } catch (error) {
+      console.error("Order submission error:", error);
+    }
+  };
+
+  // Show user agent setup if not created
+  if (!isUserAgentCreated) {
+    return (
+      <div className="trading-panel space-y-4">
+        <h3 className="text-lg font-semibold text-white mb-4">Trading Setup Required</h3>
+        <UserAgentSetup />
+      </div>
+    );
+  }
 
   return (
     <div className="trading-panel">
@@ -134,7 +199,7 @@ export function TradingInterface() {
       {/* Available Balance */}
       <div className="flex items-center justify-between text-sm mb-4">
         <span className="text-gray-400">Available to Trade</span>
-        <span className="text-white">{orderData.availableBalance} USDC</span>
+        <span className="text-white">{balanceData?.availableBalance || "0.00"} USDC</span>
       </div>
 
       {/* Order Summary */}
@@ -167,9 +232,17 @@ export function TradingInterface() {
         className={`w-full h-12 font-semibold ${
           orderData.side === "buy" ? "buy-button" : "sell-button"
         }`}
-        disabled={!orderData.size || parseFloat(orderData.size) <= 0}
+        disabled={!orderData.size || parseFloat(orderData.size) <= 0 || isTrading}
+        onClick={handleSubmitOrder}
       >
-        {orderData.side === "buy" ? "Buy" : "Sell"} HYPE
+        {isTrading ? (
+          <>
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
+            {isPlacingMarketOrder ? "Placing Market Order..." : isPlacingLimitOrder ? "Placing Limit Order..." : "Processing..."}
+          </>
+        ) : (
+          `${orderData.side === "buy" ? "Buy" : "Sell"} ${selectedSymbol || "HYPE"}`
+        )}
       </Button>
     </div>
   );

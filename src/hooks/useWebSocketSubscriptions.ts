@@ -2,7 +2,12 @@
 
 import React, { useEffect } from "react";
 import { subscriptionClient } from "@/services/hyperliquidApi";
-import type { Subscription } from "@nktkas/hyperliquid";
+import type {
+  FrontendOrder,
+  OrderStatus,
+  Subscription,
+  UserFundingUpdate,
+} from "@nktkas/hyperliquid";
 import { usePrivy } from "@privy-io/react-auth";
 import { Address } from "viem";
 import { formatters, priceToWire, toNumSafe } from "@/lib/utils";
@@ -35,8 +40,8 @@ type WebSocketSubscriptionsProps = {
   setOpenOrders: React.Dispatch<React.SetStateAction<OpenOrder[]>>;
   setOrderBook: React.Dispatch<React.SetStateAction<OrderBookData | null>>;
   setRecentTrades: React.Dispatch<React.SetStateAction<Trade[]>>;
-  setFundingHistory: (fundingHistory: any[]) => void;
-  setOrderHistory: (orderHistory: any[]) => void;
+  setFundingHistory: (fundingHistory: UserFundingUpdate[]) => void;
+  setOrderHistory: (orderHistory: OrderStatus<FrontendOrder>[]) => void;
 
   // Data dependencies
   availableAssets: Asset[];

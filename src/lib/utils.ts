@@ -37,8 +37,8 @@ export const formatters = {
 
   formatPriceChange: (change: string | number): string => {
     const num = parseFloat(change.toString());
-    const sign = num >= 0 ? "+" : "";
-    return `${sign}$${num}`;
+    const sign = num >= 0 ? "+" : "-";
+    return `${sign}$${Math.abs(num).toFixed(2)}`;
   },
 
   formatPercentageChange: (change: string | number): string => {

@@ -10,7 +10,7 @@
     "format": "bunx biome format --write"
   },
   "dependencies": {
-    "@nktkas/hyperliquid": "^0.15.4",
+    "@nktkas/hyperliquid": "^0.24.3",
     "@privy-io/react-auth": "^2.24.0",
     "@privy-io/wagmi-connector": "^0.1.13",
     "@radix-ui/react-dialog": "^1.1.15",

@@ -16,9 +16,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
             // Cache time - keep in memory for 5 minutes
             gcTime: 5 * 60 * 1000,
             // Retry failed requests
-            retry: (failureCount, error: any) => {
+            retry: (failureCount: number, error: Error & { status?: number }) => {
               // Don't retry 4xx errors
-              if (error?.status >= 400 && error?.status < 500) {
+              if (error?.status !== undefined && error.status >= 400 && error.status < 500) {
                 return false;
               }
               // Retry up to 3 times for other errors

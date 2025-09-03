@@ -18,7 +18,11 @@ const WS_URL = isTestnet
 
 /** Base transports */
 export const httpTransport = new hl.HttpTransport({
-  url: HTTP_URL,
+  server: {
+    mainnet: {
+      api: HTTP_URL,
+    },
+  },
   timeout: 10_000,
 });
 
@@ -33,10 +37,31 @@ export const wsTransport = new hl.WebSocketTransport({
 });
 
 /** Clients (names aligned to your requested API) */
-export const infoClient = new hl.PublicClient({ transport: httpTransport });
-export const subscriptionClient = new hl.EventClient({
+export const infoClient = new hl.InfoClient({ transport: httpTransport });
+export const subscriptionClient = new hl.SubscriptionClient({
   transport: wsTransport,
 });
+
+/** Trading client for user agent operations */
+let tradingClient: hl.ExchangeClient | null = null;
+
+export const createTradingClient = (privateKey: `0x${string}`) => {
+  tradingClient = new hl.ExchangeClient({
+    transport: httpTransport,
+    wallet: privateKey,
+    isTestnet,
+  });
+  return tradingClient;
+};
+
+export const getTradingClient = (): hl.ExchangeClient => {
+  if (!tradingClient) {
+    throw new Error(
+      "Trading client not initialized. Call createTradingClient first.",
+    );
+  }
+  return tradingClient;
+};
 
 /** Optional: simple token bucket to be polite with /info */
 class RateLimiter {
@@ -141,18 +166,10 @@ export const hyperliquidApi = {
     }
   },
 
-  // Try both shapes to be future-proof (userState vs clearinghouseState)
-  getUserState: async (user: string) => {
+  getUserState: async (user: Address) => {
     try {
       await infoLimiter.take(1);
-      const anyClient = infoClient as any;
-      if (typeof anyClient.userState === "function") {
-        return await anyClient.userState({ user });
-      }
-      if (typeof anyClient.clearinghouseState === "function") {
-        return await anyClient.clearinghouseState({ user });
-      }
-      throw new Error("No user state method on client");
+      return await infoClient.clearinghouseState({ user });
     } catch (err) {
       console.error("Error fetching user state:", err);
       throw err;
@@ -160,16 +177,13 @@ export const hyperliquidApi = {
   },
 
   getFundingHistory: async (
-    user: string,
+    user: Address,
     startTime: number,
     endTime?: number,
   ) => {
     try {
       await infoLimiter.take(1);
-      if (typeof infoClient.userFunding === "function") {
-        return await infoClient.userFunding({ user, startTime, endTime });
-      }
-      throw new Error("No funding history method on client");
+      return await infoClient.userFunding({ user, startTime, endTime });
     } catch (err) {
       console.error("Error fetching funding history:", err);
       throw err;
@@ -179,10 +193,7 @@ export const hyperliquidApi = {
   getRecentTrades: async (user: Address) => {
     try {
       await infoLimiter.take(1);
-      if (typeof infoClient.userFills === "function") {
-        return await infoClient.userFills({ user });
-      }
-      throw new Error("No user fills by time method on client");
+      return await infoClient.userFills({ user });
     } catch (err) {
       console.error("Error fetching user fills by time history:", err);
       throw err;
@@ -192,10 +203,7 @@ export const hyperliquidApi = {
   getUserOrderHistory: async (user: Address) => {
     try {
       await infoLimiter.take(1);
-      if (typeof infoClient.historicalOrders === "function") {
-        return await infoClient.historicalOrders({ user });
-      }
-      throw new Error("No user fills method on client");
+      return await infoClient.historicalOrders({ user });
     } catch (err) {
       console.error("Error fetching user order history:", err);
       throw err;
@@ -212,6 +220,106 @@ export const hyperliquidApi = {
       });
     } catch (err) {
       console.error("Error fetching TWAP data:", err);
+      throw err;
+    }
+  },
+
+  // User Agent Operations
+  approveAgent: async (agentAddress: Address, agentName: string) => {
+    try {
+      const client = getTradingClient();
+      const result = await client.approveAgent({ agentAddress, agentName });
+      console.log("✅ User agent approved:", result);
+      return result;
+    } catch (err) {
+      console.error("Error approving user agent:", err);
+      throw err;
+    }
+  },
+
+  // Trading Operations
+  placeMarketOrder: async (
+    asset: number,
+    is_buy: boolean,
+    sz: string,
+    reduce_only = false,
+  ) => {
+    try {
+      const client = getTradingClient();
+      const result = await client.order({
+        orders: [
+          {
+            a: asset,
+            b: is_buy,
+            p: "0", // Market orders use "0" for price
+            s: sz,
+            r: reduce_only,
+            t: { limit: { tif: "FrontendMarket" } },
+          },
+        ],
+        grouping: "na",
+      });
+      console.log("✅ Market order placed:", result);
+      return result;
+    } catch (err) {
+      console.error("Error placing market order:", err);
+      throw err;
+    }
+  },
+
+  placeLimitOrder: async (
+    asset: number,
+    is_buy: boolean,
+    sz: string,
+    limit_px: string,
+    tif: "Alo" | "Ioc" | "Gtc" = "Gtc",
+    reduce_only = false,
+  ) => {
+    try {
+      const client = getTradingClient();
+      const result = await client.order({
+        orders: [
+          {
+            a: asset,
+            b: is_buy,
+            p: limit_px,
+            s: sz,
+            r: reduce_only,
+            t: { limit: { tif } },
+          },
+        ],
+        grouping: "na",
+      });
+      console.log("✅ Limit order placed:", result);
+      return result;
+    } catch (err) {
+      console.error("Error placing limit order:", err);
+      throw err;
+    }
+  },
+
+  cancelOrder: async (asset: number, oid: number) => {
+    try {
+      const client = getTradingClient();
+      const result = await client.cancel({
+        cancels: [{ a: asset, o: oid }],
+      });
+      console.log("✅ Order cancelled:", result);
+      return result;
+    } catch (err) {
+      console.error("Error cancelling order:", err);
+      throw err;
+    }
+  },
+
+  cancelAllOrders: async (asset?: number) => {
+    try {
+      const client = getTradingClient();
+      const result = await client.scheduleCancel();
+      console.log("✅ All orders cancelled:", result);
+      return result;
+    } catch (err) {
+      console.error("Error cancelling all orders:", err);
       throw err;
     }
   },
