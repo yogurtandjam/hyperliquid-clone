@@ -1,46 +1,34 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import { useAppData } from "@/contexts/AppContext";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
-import { FundingHistoryItem } from "@/types";
+import { QueryKeys } from "@/types";
+import { usePrivy } from "@privy-io/react-auth";
+import { useQuery } from "@tanstack/react-query";
 
 export function useFundingHistory(days: number = 7) {
   const { selectedSymbol, fundingHistory, setFundingHistory } = useAppData();
-
-  const endTime = Math.floor(Date.now() / 1000);
-  const startTime = endTime - days * 24 * 60 * 60;
+  const { user } = usePrivy();
 
   const query = useQuery({
-    queryKey: ["fundingHistory", selectedSymbol, startTime, endTime],
+    queryKey: [QueryKeys.FundingHistory],
     queryFn: async () => {
-      if (!selectedSymbol) {
-        throw new Error("No symbol selected");
+      if (!user?.wallet?.address) {
+        throw new Error("No user");
       }
-
+      const endTime = Math.floor(Date.now());
+      const startTime = endTime - days * 24 * 60 * 60 * 1000;
       const rawFundingHistory = await hyperliquidApi.getFundingHistory(
-        selectedSymbol,
+        user?.wallet?.address,
         startTime,
         endTime,
       );
-
-      // Transform API response to FundingHistoryItem format
-      const formattedHistory: FundingHistoryItem[] = Array.isArray(
-        rawFundingHistory,
-      )
-        ? rawFundingHistory.map((funding: any) => ({
-            coin: selectedSymbol,
-            fundingRate: funding.fundingRate || "0",
-            premium: funding.premium || "0",
-            time: funding.time,
-          }))
-        : [];
-
+      console.log(rawFundingHistory);
       // Update context state
-      setFundingHistory(formattedHistory);
-      return formattedHistory;
+      setFundingHistory(rawFundingHistory.sort((a, b) => b.time - a.time));
+      return rawFundingHistory;
     },
-    enabled: !!selectedSymbol,
+    enabled: !!user?.wallet?.address,
     refetchInterval: 60000, // Refetch every minute
     staleTime: 30000, // Data considered fresh for 30 seconds
   });
@@ -48,9 +36,6 @@ export function useFundingHistory(days: number = 7) {
   // Return data from context state, with query status
   return {
     ...query,
-    data:
-      fundingHistory.length > 0 && fundingHistory[0]?.coin === selectedSymbol
-        ? fundingHistory
-        : query.data,
+    data: fundingHistory,
   };
 }

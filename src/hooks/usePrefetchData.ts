@@ -27,13 +27,13 @@ export function usePrefetchData(selectedSymbol?: string) {
       
       // Order history
       queryClient.prefetchQuery({
-        queryKey: ["orderHistory", userAddress],
+        queryKey: [QueryKeys.OrderHistory, userAddress],
         staleTime: 15000,
       }),
       
       // TWAP data
       queryClient.prefetchQuery({
-        queryKey: ["twapData", userAddress],
+        queryKey: [QueryKeys.TwapData, userAddress],
         staleTime: 30000,
       }),
     ];
@@ -45,7 +45,7 @@ export function usePrefetchData(selectedSymbol?: string) {
       
       prefetchPromises.push(
         queryClient.prefetchQuery({
-          queryKey: ["fundingHistory", selectedSymbol, startTime, endTime],
+          queryKey: [QueryKeys.FundingHistory, selectedSymbol, startTime, endTime],
           staleTime: 30000,
         })
       );
@@ -69,7 +69,7 @@ export function usePrefetchData(selectedSymbol?: string) {
   const prefetchOrderHistory = useCallback(async () => {
     if (!userAddress) return;
     return queryClient.prefetchQuery({
-      queryKey: ["orderHistory", userAddress],
+      queryKey: [QueryKeys.OrderHistory, userAddress],
     });
   }, [queryClient, userAddress]);
 
@@ -79,14 +79,14 @@ export function usePrefetchData(selectedSymbol?: string) {
     const startTime = endTime - (7 * 24 * 60 * 60);
     
     return queryClient.prefetchQuery({
-      queryKey: ["fundingHistory", selectedSymbol, startTime, endTime],
+      queryKey: [QueryKeys.FundingHistory, selectedSymbol, startTime, endTime],
     });
   }, [queryClient, selectedSymbol]);
 
   const prefetchTwapData = useCallback(async () => {
     if (!userAddress) return;
     return queryClient.prefetchQuery({
-      queryKey: ["twapData", userAddress],
+      queryKey: [QueryKeys.TwapData, userAddress],
     });
   }, [queryClient, userAddress]);
 

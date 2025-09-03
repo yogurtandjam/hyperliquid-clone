@@ -8,16 +8,19 @@ import {
   AppDataContextType,
   Asset,
   BalanceData,
-  FundingHistoryItem,
   MarketData,
   OpenOrder,
   OrderBookData,
-  OrderHistoryItem,
   Position,
   Trade,
   TwapData,
 } from "@/types";
-import { useQueryClient } from "@tanstack/react-query";
+import {
+  FrontendOrder,
+  OrderStatus,
+  UserFundingUpdate,
+} from "@nktkas/hyperliquid";
+import { usePrivy } from "@privy-io/react-auth";
 import {
   createContext,
   ReactNode,
@@ -37,9 +40,6 @@ export function useAppData() {
   return context;
 }
 
-// Keep for backward compatibility during transition
-export const useMarketData = useAppData;
-
 interface MarketDataProviderProps {
   children: ReactNode;
 }
@@ -47,7 +47,6 @@ interface MarketDataProviderProps {
 export function AppDataProvider({ children }: MarketDataProviderProps) {
   // WebSocket state (real-time)
   const [marketData, setMarketData] = useState<MarketData>({});
-  const [assetsMap, setAssetsMap] = useState<{ [key: string]: number }>({});
   const [orderBook, setOrderBook] = useState<OrderBookData | null>(null);
   const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState("");
@@ -59,14 +58,14 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
 
   // HTTP state (historical/on-demand)
   const [tradeHistory, setTradeHistory] = useState<Trade[]>([]);
-  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
-  const [fundingHistory, setFundingHistory] = useState<FundingHistoryItem[]>(
-    [],
-  );
+  const [orderHistory, setOrderHistory] = useState<
+    OrderStatus<FrontendOrder>[]
+  >([]);
+  const [fundingHistory, setFundingHistory] = useState<UserFundingUpdate[]>([]);
   const [twapData, setTwapData] = useState<TwapData | null>(null);
 
-  const queryClient = useQueryClient();
   const { prefetchAll } = usePrefetchData(selectedSymbol);
+  const { user } = usePrivy();
 
   // Derived state: compute selectedAsset from selectedSymbol and availableAssets
   const selectedAsset = useMemo(() => {
@@ -105,10 +104,6 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
             perpetuals.slice(0, 10).map((asset) => asset.name),
           );
           setAvailableAssets(perpetuals);
-          setAssetsMap(
-            perpetuals.reduce((a, b) => ({ ...a, [b.name]: b }), {}),
-          );
-
           // Set default symbol to the first available perpetual (usually BTC)
           if (perpetuals.length > 0 && !selectedSymbol) {
             const defaultAsset =
@@ -230,13 +225,8 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
 
   // Prefetch data when user authentication state changes
   useEffect(() => {
-    // Small delay to ensure other hooks are ready
-    const timeoutId = setTimeout(() => {
-      prefetchAll();
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [prefetchAll]);
+    prefetchAll();
+  }, [user, prefetchAll]);
 
   return (
     <AppDataContext.Provider

@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
-import { useMarketData } from "@/contexts/AppContext";
+import { useAppData } from "@/contexts/AppContext";
 
 interface OrderBookEntry {
   price: string;
@@ -20,7 +20,7 @@ interface OrderBookEntry {
 
 export function OrderBook() {
   const { orderBook, recentTrades, selectedSymbol, selectedAsset } =
-    useMarketData();
+    useAppData();
 
   const OrderBookTable = ({
     data,

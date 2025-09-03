@@ -24,7 +24,7 @@ import {
   CandlestickChart,
 } from "lucide-react";
 import { Candle } from "@nktkas/hyperliquid";
-import { useMarketData } from "@/contexts/AppContext";
+import { useAppData } from "@/contexts/AppContext";
 
 /* ---------------- Types ---------------- */
 type TFKey =
@@ -128,7 +128,7 @@ export const TradingChart = () => {
   > | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
-  const { selectedSymbol } = useMarketData();
+  const { selectedSymbol } = useAppData();
 
   const [timeFrame, setTimeframe] = useState<TFKey>("1D_1M");
   const [isLoading, setIsLoading] = useState(true);

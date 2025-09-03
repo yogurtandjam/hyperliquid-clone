@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { TickerSelector } from "@/components/TickerSelector";
-import { useMarketData } from "@/contexts/AppContext";
+import { useAppData } from "@/contexts/AppContext";
 import { subscriptionClient } from "@/services/hyperliquidApi";
 import { formatters, priceToWire, toNumSafe } from "@/lib/utils";
 import { WsActiveAssetCtx } from "@nktkas/hyperliquid";
@@ -34,7 +34,7 @@ const normalizeCtx = (raw: WsActiveAssetCtx): MarketCtx => {
 };
 
 export function MarketInfoHeader() {
-  const { selectedSymbol, selectedAsset } = useMarketData();
+  const { selectedSymbol, selectedAsset } = useAppData();
 
   const [mark, setMark] = useState<number | undefined>();
   const [oracle, setOracle] = useState<number | undefined>();

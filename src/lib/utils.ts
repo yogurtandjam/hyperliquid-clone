@@ -116,3 +116,28 @@ export function priceToWire(
 
   return s;
 }
+
+type Direction = "Long" | "Short" | "Close Long" | "Close Short";
+type OrderSide = "A" | "B" | boolean; // A = sell, B = buy. (or b=true/false from HL)
+type OrderType = string; // e.g. "Limit", "Market", "Stop Market", "Take Profit Market"
+
+export function inferDirection(
+  side: OrderSide,
+  type: OrderType,
+  opts?: { reduceOnly?: boolean },
+): Direction {
+  const isBuy = side === "B" || side === true;
+  const t = type.toLowerCase();
+
+  // TP/SL/Stop orders are inherently closing; reduceOnly forces closing too
+  const closingByType =
+    t.includes("stop") ||
+    t.includes("take profit") ||
+    t.includes("tp") ||
+    t.includes("sl");
+
+  const isClosing = closingByType || !!opts?.reduceOnly;
+
+  if (isClosing) return isBuy ? "Close Short" : "Close Long";
+  return isBuy ? "Long" : "Short";
+}
