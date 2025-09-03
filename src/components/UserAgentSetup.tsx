@@ -139,9 +139,12 @@ export function UserAgentSetup() {
               </span>
             </div>
             <div className="text-xs text-green-700 dark:text-green-300 break-all">
-              Agent Address: {(() => {
+              Agent Address:{" "}
+              {(() => {
                 const record = getLocalAgentRecord();
-                return record?.privateKey ? privateKeyToAccount(record.privateKey).address : 'Unknown';
+                return record?.privateKey
+                  ? privateKeyToAccount(record.privateKey).address
+                  : "Unknown";
               })()}
             </div>
           </div>
@@ -169,11 +172,11 @@ export function UserAgentSetup() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto overflow-auto">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
+        <CardTitle className="flex items-center space-x-2 justify-center">
           <Key className="h-5 w-5" />
-          <span>User Agent Setup</span>
+          <div>User Agent Setup</div>
         </CardTitle>
         <CardDescription>
           Create or connect a trading agent for on-chain order execution
@@ -268,11 +271,6 @@ export function UserAgentSetup() {
           <AlertDescription>
             Your wallet authorizes agent actions via signature. Your agent
             private key is managed locally and never sent to our servers.
-            <br />
-            <br />
-            <strong>Important:</strong> You must have funds deposited in your
-            Hyperliquid account before creating or using a user agent. Your agent
-            will trade using your main account's balance.
           </AlertDescription>
         </Alert>
 
@@ -311,6 +309,6 @@ export function UserAgentSetup() {
           </Button>
         </div>
       </CardContent>
-    </Card>
+    </div>
   );
 }

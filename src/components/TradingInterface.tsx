@@ -152,14 +152,7 @@ export function TradingInterface() {
 
   // Show user agent setup if not created
   if (!isUserAgentCreated) {
-    return (
-      <div className="trading-panel space-y-4">
-        <h3 className="text-lg font-semibold text-white mb-4">
-          Trading Setup Required
-        </h3>
-        <UserAgentSetup />
-      </div>
-    );
+    return <UserAgentSetup />;
   }
 
   return (
