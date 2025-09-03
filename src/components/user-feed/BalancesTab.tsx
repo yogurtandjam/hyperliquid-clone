@@ -2,150 +2,140 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Filter, Eye, EyeOff } from "lucide-react";
+import { Filter, Eye, EyeOff, Send, ArrowUpDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { usePrivy } from "@privy-io/react-auth";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
-import { formatters } from "@/lib/utils";
+import { formatters, toNumSafe } from "@/lib/utils";
+import { useMarketData } from "@/contexts/AppContext";
 import { num } from "./shared";
 
-type Bal = {
-  asset: string;
-  balanceUsd?: number;
-  balance?: number;
-  totalBalance?: string;
-  availableBalance?: string;
-  usdcValue?: string;
-  pnl?: string;
+export type Bal = {
+  coin: string;
+  totalBalance: string;
+  availableBalance: string;
+  usdcValue: string;
+  pnlRoe: string;
+  send?: boolean;
+  transfer?: boolean;
   contract?: string;
 };
 
 export function BalancesTab() {
-  const { user } = usePrivy();
-  const [hideSmallBalances, setHideSmallBalances] = useState(false);
-  const [balances, setBalances] = useState<Bal[]>([]);
-  const [equityUsd, setEquityUsd] = useState<number | undefined>();
+  const { balanceData } = useMarketData();
 
-  useEffect(() => {
-    if (!user?.wallet?.address) return;
+  // Create balance row from webData2 clearingHouseState
+  const balances: Bal[] = balanceData
+    ? [
+        {
+          coin: "USDC (Perps)",
+          totalBalance: balanceData.accountValue || "0.00",
+          availableBalance: balanceData.availableBalance || "0.00",
+          usdcValue: balanceData.accountValue || "0.00",
+          pnlRoe: balanceData.unrealizedPnl
+            ? `$${balanceData.unrealizedPnl.toFixed(2)} (${(
+                (balanceData.unrealizedPnl /
+                  parseFloat(balanceData.accountValue)) *
+                100
+              ).toFixed(2)}%)`
+            : "+0.00 (+0.00%)",
+          send: true,
+          transfer: true,
+          contract: "N/A", // Perps don't have contracts
+        },
+      ]
+    : [];
 
-    const fetchBalances = async () => {
-      const address = user.wallet?.address;
-      if (!user.wallet?.address) {
-        console.error("No user wallet connected, not fetching balances");
-      }
-      try {
-        const state = await hyperliquidApi.getUserState(user.wallet.address);
-        if (state) {
-          // Extract equity
-          const eq =
-            num(state?.equityUsd) ??
-            num(state?.account?.equityUsd) ??
-            num(state?.marginSummary?.equityUsd);
-          setEquityUsd(eq);
-
-          // Extract balances
-          const bals =
-            state?.balances ??
-            state?.account?.balances ??
-            state?.subaccounts?.[0]?.balances ??
-            [];
-          const mapped: Bal[] = bals.map((b: any) => ({
-            asset: String(b.asset ?? b.coin ?? b.symbol ?? "USD"),
-            balanceUsd: num(b.balanceUsd ?? b.usd),
-            balance: num(b.balance),
-            totalBalance: b.balance ? formatters.formatSize(b.balance) : "0.00",
-            availableBalance: b.balance
-              ? formatters.formatSize(b.balance)
-              : "0.00",
-            usdcValue: b.balanceUsd
-              ? formatters.formatPrice(b.balanceUsd, 2)
-              : "0.00",
-            pnl: "+0.00", // TODO: calculate PnL
-            contract: b.contract || "N/A",
-          }));
-          setBalances(mapped);
-        }
-      } catch (error) {
-        console.error("Error fetching balances:", error);
-      }
-    };
-
-    fetchBalances();
-  }, [user?.wallet?.address]);
+  // Filter small balances if enabled
+  // const filteredBalances = hideSmallBalances
+  //   ? balances.filter((balance) => {
+  //       const value = toNumSafe(balance.totalBalance) || 0;
+  //       return value > 0.01; // Hide balances smaller than $0.01
+  //     })
+  //   : balances;
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setHideSmallBalances(!hideSmallBalances)}
-          className="text-gray-400 hover:text-white"
-        >
-          {hideSmallBalances ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-          <span className="ml-2">Hide Small Balances</span>
-        </Button>
-      </div>
-
-      {/* Balances Header */}
-      <div className="grid grid-cols-6 gap-1 text-xs text-gray-400 pb-2 border-b border-gray-700">
-        <div className="flex items-center space-x-1">
-          <span>Coin</span>
-          <Filter className="h-3 w-3" />
-        </div>
-        <div className="text-right flex items-center justify-end space-x-1">
-          <span>Total Balance</span>
-          <Filter className="h-3 w-3" />
-        </div>
-        <div className="text-right flex items-center justify-end space-x-1">
-          <span>Available Balance</span>
-          <Filter className="h-3 w-3" />
-        </div>
-        <div className="text-right flex items-center justify-end space-x-1">
-          <span>USDC Value</span>
-          <Filter className="h-3 w-3" />
-        </div>
-        <div className="text-right flex items-center justify-end space-x-1">
-          <span>PNL (ROE %)</span>
-          <Filter className="h-3 w-3" />
-        </div>
-        <div className="text-right flex items-center justify-end space-x-1">
-          <span>Contract</span>
-          <Filter className="h-3 w-3" />
-        </div>
-      </div>
-
-      {/* Balances Data */}
-      <ScrollArea className="h-40">
-        {balances.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">No balances yet</div>
-        ) : (
-          <div className="space-y-2">
-            {balances.map((balance, index) => (
-              <div
-                key={index}
-                className="grid grid-cols-6 gap-1 text-sm py-2 hover:bg-gray-800/50 rounded"
-              >
-                <div className="font-semibold text-white">{balance.asset}</div>
-                <div className="text-right text-white">
-                  {balance.totalBalance}
-                </div>
-                <div className="text-right text-white">
-                  {balance.availableBalance}
-                </div>
-                <div className="text-right text-white">{balance.usdcValue}</div>
-                <div className="text-right text-teal-400">{balance.pnl}</div>
-                <div className="text-right text-gray-400 font-mono text-xs">
-                  {balance.contract}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+      <ScrollArea className="h-80">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Coin</TableHead>
+              <TableHead className="text-right">Total Balance</TableHead>
+              <TableHead className="text-right">Available Balance</TableHead>
+              <TableHead className="text-right">USDC Value</TableHead>
+              <TableHead className="text-right">PNL (ROE %)</TableHead>
+              <TableHead className="text-center">Send</TableHead>
+              <TableHead className="text-center">Transfer</TableHead>
+              <TableHead className="text-right">Contract</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {balances.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-8 text-gray-400"
+                >
+                  {balanceData
+                    ? "No balances to display"
+                    : "Connect wallet to view balances"}
+                </TableCell>
+              </TableRow>
+            ) : (
+              balances.map((balance, index) => (
+                <TableRow key={index} className="hover:bg-gray-800/50">
+                  <TableCell className="font-semibold">
+                    {balance.coin}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${Number(balance.totalBalance).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${Number(balance.availableBalance).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${Number(balance.usdcValue).toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    className={`text-right ${
+                      balanceData?.unrealizedPnl &&
+                      balanceData.unrealizedPnl > 0
+                        ? "text-teal-400"
+                        : "text-red-400"
+                    }`}
+                  >
+                    {balance.pnlRoe}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {balance.send && (
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <Send className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {balance.transfer && (
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <ArrowUpDown className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right text-gray-400 font-mono text-xs">
+                    {balance.contract}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </ScrollArea>
     </div>
   );

@@ -10,7 +10,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink } from "lucide-react";
-import { useMarketData } from "@/contexts/MarketDataContext";
+import { useMarketData } from "@/contexts/AppContext";
 
 interface OrderBookEntry {
   price: string;
@@ -165,7 +165,7 @@ export function OrderBook() {
                         trade.side === "buy" ? "text-teal-400" : "text-red-400"
                       }`}
                     >
-                      {parseFloat(trade.price).toFixed(2)}
+                      {trade.price}
                     </div>
                     <div className="text-right font-mono text-gray-300">
                       {selectedAsset

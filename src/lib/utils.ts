@@ -1,3 +1,4 @@
+import { Candle } from "@nktkas/hyperliquid";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -5,6 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export const toNumSafe = (v: unknown): number => {
+  if (!v) return 0;
+  const x =
+    typeof v === "string" ? parseFloat(v) : typeof v === "number" ? v : NaN;
+  return Number.isFinite(x) ? x : 0;
+};
+
+// TODO: clean up formatters
 export const formatters = {
   formatPrice: (price: string | number, decimals: number = 2): string => {
     return parseFloat(price.toString()).toFixed(decimals);
@@ -54,7 +63,7 @@ export const formatters = {
   },
 
   // Convert Hyperliquid candle data to TradingView format
-  formatCandleData: (candles: any[]): any[] => {
+  formatCandleData: (candles: Candle[]) => {
     return candles.map((candle) => ({
       time: candle.t / 1000, // Convert to seconds
       open: parseFloat(candle.o),

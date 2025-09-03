@@ -1,60 +1,23 @@
 "use client";
-import { useEffect, useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
-import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { formatters } from "@/lib/utils";
-
-interface Trade {
-  time: number;
-  coin: string;
-  side: string;
-  price: string;
-  size: string;
-  txHash?: string;
-}
+import { useTradesData } from "@/hooks/useTradesData";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function TradeHistoryTab() {
-  const { user } = usePrivy();
-  const [userTrades, setUserTrades] = useState<Trade[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { data: userTrades = [], isLoading } = useTradesData();
 
-  useEffect(() => {
-    if (!user?.wallet?.address) return;
+  // Show last 50 trades
+  const allTrades = userTrades.slice(0, 50);
 
-    const fetchUserTrades = async () => {
-      setLoading(true);
-      try {
-        const response = await hyperliquidApi.getUserFills(user.wallet.address);
-        if (response && Array.isArray(response)) {
-          const mapped: Trade[] = response
-            .map((fill) => ({
-              time: Number(fill.time || fill.time || Date.now()),
-              coin: String(fill.coin || ""),
-              side: String(fill.dir) || "",
-              price: formatters.formatPrice(fill.px || "0"),
-              size: formatters.formatSize(fill.sz || "0"),
-              txHash: fill.hash,
-            }))
-            .sort((a, b) => b.time - a.time)
-            .slice(0, 100); // Limit to last 100 trades
-          setUserTrades(mapped);
-        }
-      } catch (error) {
-        console.error("Error fetching user trades:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserTrades();
-  }, [user?.wallet?.address]);
-
-  // Combine user trades with recent market trades if available
-  const allTrades = [...userTrades]
-    .sort((a, b) => b.time - a.time)
-    .slice(0, 50); // Show last 50 trades
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="text-center py-8 text-gray-400">
         Loading trade history...
@@ -64,39 +27,49 @@ export function TradeHistoryTab() {
 
   return (
     <div className="space-y-4">
-      {allTrades.length === 0 ? (
-        <div className="text-center py-8 text-gray-400">No trade history</div>
-      ) : (
-        <div className="space-y-2">
-          <div className="grid grid-cols-5 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700">
-            <div>Time</div>
-            <div>Coin</div>
-            <div>Direction</div>
-            <div className="text-right">Price</div>
-            <div className="text-right">Size</div>
-          </div>
-          {allTrades.map((trade, index) => (
-            <div
-              key={`${trade.time}-${trade.coin}-${index}`}
-              className="grid grid-cols-5 gap-2 text-sm py-2 hover:bg-gray-800/50 rounded"
-            >
-              <div className="text-gray-400">
-                {formatters.formatTime(trade.time)}
-              </div>
-              <div className="font-semibold text-white">{trade.coin}</div>
-              <div
-                className={
-                  trade.side === "buy" ? "text-green-400" : "text-red-400"
-                }
-              >
-                {trade.side.toUpperCase()}
-              </div>
-              <div className="text-right text-white">{trade.price}</div>
-              <div className="text-right text-white">{trade.size}</div>
-            </div>
-          ))}
-        </div>
-      )}
+      <ScrollArea className="h-80">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Time</TableHead>
+              <TableHead>Coin</TableHead>
+              <TableHead>Direction</TableHead>
+              <TableHead className="text-right">Price</TableHead>
+              <TableHead className="text-right">Size</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {allTrades.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                  No trade history
+                </TableCell>
+              </TableRow>
+            ) : (
+              allTrades.map((trade, index) => (
+                <TableRow
+                  key={`${trade.time}-${trade.coin}-${index}`}
+                  className="hover:bg-gray-800/50"
+                >
+                  <TableCell className="text-gray-400">
+                    {formatters.formatTime(trade.time)}
+                  </TableCell>
+                  <TableCell className="font-semibold">{trade.coin}</TableCell>
+                  <TableCell
+                    className={
+                      trade.side === "buy" ? "text-green-400" : "text-red-400"
+                    }
+                  >
+                    {trade.side.toUpperCase()}
+                  </TableCell>
+                  <TableCell className="text-right">{trade.price}</TableCell>
+                  <TableCell className="text-right">{trade.size}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </ScrollArea>
     </div>
   );
 }

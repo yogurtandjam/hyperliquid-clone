@@ -2,77 +2,113 @@
 import { useEffect, useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
-import { formatters } from "@/lib/utils";
+import { formatters, toNumSafe } from "@/lib/utils";
+import { useMarketData } from "@/contexts/AppContext";
 import { getUserState, num } from "./shared";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type Pos = {
   coin: string;
-  sz: number;
-  entryPx?: number;
-  pnlUsd?: number;
-  liqPx?: number;
+  size: string;
+  positionValue: string;
+  entryPrice: string;
+  markPrice: string;
+  pnlRoe: string;
+  liquidationPrice: string;
+  margin: string;
+  funding: string;
 };
 
 export function PositionsTab() {
-  const { user } = usePrivy();
-  const [rows, setRows] = useState<Pos[]>([]);
+  const { positions, marketData } = useMarketData();
 
-  useEffect(() => {
-    if (!user?.wallet?.address) return;
-    let cancelled = false;
+  // Convert positions from context to display format - use preformatted strings
+  const rows: Pos[] = positions.map((pos) => {
+    const markPrice = marketData[pos.coin]?.price || "0";
 
-    async function seed() {
-      try {
-        const resp = await hyperliquidApi.getUserState(user.wallet.address);
-        // Try a few shapes
-        const pos =
-          resp?.positions ??
-          resp?.account?.positions ??
-          resp?.subaccounts?.[0]?.positions ??
-          [];
-        const mapped: Pos[] = pos.map((p: any) => ({
-          coin: String(p.coin ?? p.asset ?? p.symbol),
-          sz: num(p.sz ?? p.size) ?? 0,
-          entryPx: num(p.entryPx ?? p.entryPrice),
-          pnlUsd: num(p.unrealizedPnlUsd ?? p.upnlUsd ?? p.pnlUsd),
-          liqPx: num(p.liqPx ?? p.liquidationPrice),
-        }));
-        if (!cancelled) setRows(mapped.filter((r) => r.sz !== 0));
-      } catch {
-        /* ignore */
-      }
-    }
-
-    void seed();
-
-    return () => {
-      cancelled = true;
+    return {
+      coin: pos.coin,
+      size: pos.szi,
+      positionValue: pos.positionValue || "—",
+      entryPrice: pos.entryPx || "—",
+      markPrice,
+      pnlRoe:
+        pos.unrealizedPnl && pos.returnOnEquity
+          ? `${pos.unrealizedPnl} (${pos.returnOnEquity})`
+          : "—",
+      liquidationPrice: pos.liquidationPrice || "—",
+      margin: pos.marginUsed || "—",
+      funding: "—", // TODO: Add funding data when available
     };
-  }, [user?.wallet?.address]);
+  });
 
   return (
-    <div className="divide-y divide-border">
-      {rows.map((r, i) => (
-        <div
-          key={i}
-          className="grid grid-cols-5 items-center gap-2 py-2 text-sm"
-        >
-          <div className="text-muted">{r.coin}</div>
-          <div className="tabular-nums">{formatters.formatSize(r.sz)}</div>
-          <div className="tabular-nums">
-            {r.entryPx != null ? formatters.formatPrice(r.entryPx) : "—"}
-          </div>
-          <div className="tabular-nums">
-            {r.pnlUsd != null ? `$${formatters.formatPrice(r.pnlUsd, 2)}` : "—"}
-          </div>
-          <div className="tabular-nums">
-            {r.liqPx != null ? formatters.formatPrice(r.liqPx) : "—"}
-          </div>
-        </div>
-      ))}
-      {!rows.length && (
-        <div className="text-center py-8 text-gray-400">No positions yet</div>
-      )}
+    <div className="space-y-4">
+      <ScrollArea className="h-80">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Coin</TableHead>
+              <TableHead className="text-left">Size</TableHead>
+              <TableHead className="text-left">Position Value</TableHead>
+              <TableHead className="text-left">Entry Price</TableHead>
+              <TableHead className="text-left">Mark Price</TableHead>
+              <TableHead className="text-left">PnL (ROE %)</TableHead>
+              <TableHead className="text-left">Liquidation Price</TableHead>
+              <TableHead className="text-left">Margin</TableHead>
+              <TableHead className="text-left">Funding</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={9}
+                  className="text-center py-8 text-gray-400"
+                >
+                  No positions yet
+                </TableCell>
+              </TableRow>
+            ) : (
+              rows.map((r, i) => (
+                <TableRow key={i} className="hover:bg-gray-800/50">
+                  <TableCell className="font-semibold">{r.coin}</TableCell>
+                  <TableCell className="text-left">{r.size}</TableCell>
+                  <TableCell className="text-left">
+                    ${r.positionValue}
+                  </TableCell>
+                  <TableCell className="text-left">{r.entryPrice}</TableCell>
+                  <TableCell className="text-left">{r.markPrice}</TableCell>
+                  <TableCell
+                    className={`text-left ${
+                      r.pnlRoe.startsWith("-")
+                        ? "text-red-400"
+                        : "text-teal-400"
+                    }`}
+                  >
+                    {r.pnlRoe}
+                  </TableCell>
+                  <TableCell className="text-left">
+                    {r.liquidationPrice}
+                  </TableCell>
+                  <TableCell className="text-left">${r.margin}</TableCell>
+                  <TableCell className="text-left text-gray-400">
+                    {r.funding}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </ScrollArea>
     </div>
   );
 }

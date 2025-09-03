@@ -2,16 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { TickerSelector } from "@/components/TickerSelector";
-import { useMarketData } from "@/contexts/MarketDataContext";
+import { useMarketData } from "@/contexts/AppContext";
 import { subscriptionClient } from "@/services/hyperliquidApi";
-import { formatters, priceToWire } from "@/lib/utils";
-
-const num = (v: unknown): number | undefined => {
-  if (v == null) return undefined;
-  const x =
-    typeof v === "string" ? parseFloat(v) : typeof v === "number" ? v : NaN;
-  return Number.isFinite(x) ? x : undefined;
-};
+import { formatters, priceToWire, toNumSafe } from "@/lib/utils";
+import { WsActiveAssetCtx } from "@nktkas/hyperliquid";
 
 type MarketCtx = {
   funding?: number;
@@ -25,17 +19,17 @@ type MarketCtx = {
   impactPxs?: number[];
 };
 
-const normalizeCtx = (raw: any): MarketCtx => {
+const normalizeCtx = (raw: WsActiveAssetCtx): MarketCtx => {
   const r = raw?.ctx ?? raw;
   return {
-    funding: num(r.funding),
-    openInterestBase: num(r.openInterest),
-    prevDayPx: num(r.prevDayPx),
-    dayNtlVlm: num(r.dayNtlVlm),
-    premium: num(r.premium),
-    oraclePx: num(r.oraclePx),
-    markPx: num(r.markPx),
-    midPx: num(r.midPx),
+    funding: toNumSafe(r.funding),
+    openInterestBase: toNumSafe(r.openInterest),
+    prevDayPx: toNumSafe(r.prevDayPx),
+    dayNtlVlm: toNumSafe(r.dayNtlVlm),
+    premium: toNumSafe(r.premium),
+    oraclePx: toNumSafe(r.oraclePx),
+    markPx: toNumSafe(r.markPx),
+    midPx: toNumSafe(r.midPx),
   };
 };
 
@@ -74,13 +68,11 @@ export function MarketInfoHeader() {
         // 24h change from prevDayPx
         if (c.prevDayPx !== undefined && c.markPx !== undefined) {
           const abs = c.markPx - c.prevDayPx;
-          console.log(
-            "yo",
-            priceToWire(abs, "perp", selectedAsset?.szDecimals),
-          );
           setChangeAbs(
-            formatters.formatPriceChange(
-              priceToWire(abs, "perp", selectedAsset?.szDecimals),
+            Number(
+              formatters.formatPriceChange(
+                priceToWire(abs, "perp", selectedAsset?.szDecimals),
+              ),
             ),
           );
           setChangePct(c.prevDayPx !== 0 ? abs / c.prevDayPx : undefined);
@@ -106,7 +98,7 @@ export function MarketInfoHeader() {
     return () => {
       if (unsub) unsub();
     };
-  }, [selectedSymbol]);
+  }, [selectedAsset?.szDecimals, selectedSymbol]);
 
   const countdownMs = useMemo(
     () => (nextFundingMs != null ? nextFundingMs - nowMs : undefined),

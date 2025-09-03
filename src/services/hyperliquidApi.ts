@@ -121,7 +121,7 @@ export const hyperliquidApi = {
     }
   },
 
-  getUserOpenOrders: async (user: string) => {
+  getUserOpenOrders: async (user: Address) => {
     try {
       await infoLimiter.take(1);
       return await infoClient.openOrders({ user });
@@ -131,7 +131,7 @@ export const hyperliquidApi = {
     }
   },
 
-  getUserFills: async (user: string, aggregateByTime?: boolean) => {
+  getUserFills: async (user: Address, aggregateByTime?: boolean) => {
     try {
       await infoLimiter.take(1);
       return await infoClient.userFills({ user, aggregateByTime });
@@ -185,6 +185,33 @@ export const hyperliquidApi = {
       throw new Error("No user fills by time method on client");
     } catch (err) {
       console.error("Error fetching user fills by time history:", err);
+      throw err;
+    }
+  },
+
+  getUserOrderHistory: async (user: Address) => {
+    try {
+      await infoLimiter.take(1);
+      if (typeof infoClient.historicalOrders === "function") {
+        return await infoClient.historicalOrders({ user });
+      }
+      throw new Error("No user fills method on client");
+    } catch (err) {
+      console.error("Error fetching user order history:", err);
+      throw err;
+    }
+  },
+
+  getTwapData: async (user: Address) => {
+    try {
+      await infoLimiter.take(1);
+      // Note: TWAP calculation would typically be done client-side using candle data
+      // or if the API provides a specific TWAP endpoint, use that instead
+      return await infoClient.userTwapSliceFills({
+        user,
+      });
+    } catch (err) {
+      console.error("Error fetching TWAP data:", err);
       throw err;
     }
   },
