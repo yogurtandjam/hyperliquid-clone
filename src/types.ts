@@ -128,3 +128,41 @@ export enum QueryKeys {
   FundingHistory = "FundingHistory",
   TwapData = "TwapData",
 }
+
+export type CreateUserAgentParams = {
+  agentName: string;
+  agentPkOverride: `0x${string}`;
+  owner: `0x${string}`; // wallet address
+  authSig: string; // signature from useSignMessage
+  authMsg: string; // exact message that was signed
+  ts: number; // unix ms, included in message
+};
+
+export type ConnectExistingUserAgentParams = {
+  agentName: string;
+  owner: `0x${string}`;
+  authSig: string;
+  authMsg: string;
+  ts: number;
+  agentPkOverride: `0x${string}`;
+};
+
+export type UserAgentState = {
+  agentName: string;
+  owner: `0x${string}`;
+  createdAt: number;
+};
+
+export type UserAgentCreateResponse = {
+  ok: true;
+  agent: UserAgentState;
+};
+
+export type UserAgentErrorResponse = {
+  ok: false;
+  error: string;
+};
+
+export type UserAgentApiResponse =
+  | UserAgentCreateResponse
+  | UserAgentErrorResponse;

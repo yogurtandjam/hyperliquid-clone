@@ -141,3 +141,5 @@ export function inferDirection(
   if (isClosing) return isBuy ? "Close Short" : "Close Long";
   return isBuy ? "Long" : "Short";
 }
+
+export const isHex64 = (v: string) => v.startsWith("0x") && v.length === 66;

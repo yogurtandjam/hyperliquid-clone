@@ -1,7 +1,8 @@
 "use client";
 
 import * as hl from "@nktkas/hyperliquid";
-import { Address } from "viem";
+import { Address, createWalletClient, custom } from "viem";
+import { privateKeyToAccount } from "viem/accounts";
 
 /** Env / network */
 const isTestnet =
@@ -45,22 +46,44 @@ export const subscriptionClient = new hl.SubscriptionClient({
 /** Trading client for user agent operations */
 let tradingClient: hl.ExchangeClient | null = null;
 
-export const createTradingClient = (privateKey: `0x${string}`) => {
+export const createAgentExchangeClient = ({
+  agentPrivateKey,
+}: {
+  agentPrivateKey: `0x${string}`;
+}) => {
   tradingClient = new hl.ExchangeClient({
     transport: httpTransport,
-    wallet: privateKey,
+    wallet: agentPrivateKey,
     isTestnet,
   });
   return tradingClient;
 };
 
-export const getTradingClient = (): hl.ExchangeClient => {
+export const getAgentExchangeClient = (): hl.ExchangeClient => {
   if (!tradingClient) {
     throw new Error(
       "Trading client not initialized. Call createTradingClient first.",
     );
   }
   return tradingClient;
+};
+
+/** Approve agent — MUST be signed by MASTER */
+export const approveAgentWithMaster = async (params: {
+  masterPk: Address;
+  agentAddress: Address;
+  agentName?: string;
+}) => {
+  const masterClient = new hl.ExchangeClient({
+    transport: httpTransport,
+    wallet: params.masterPk,
+    isTestnet,
+  });
+
+  return masterClient.approveAgent({
+    agentAddress: params.agentAddress,
+    agentName: params.agentName ?? null,
+  });
 };
 
 /** Optional: simple token bucket to be polite with /info */
@@ -225,16 +248,41 @@ export const hyperliquidApi = {
   },
 
   // User Agent Operations
-  approveAgent: async (agentAddress: Address, agentName: string) => {
-    try {
-      const client = getTradingClient();
-      const result = await client.approveAgent({ agentAddress, agentName });
-      console.log("✅ User agent approved:", result);
-      return result;
-    } catch (err) {
-      console.error("Error approving user agent:", err);
-      throw err;
-    }
+  approveAgentWithWallet: async ({
+    ownerAddress,
+    agentPk, // the agent's *private key* you generated locally
+    agentName,
+  }: {
+    ownerAddress: Address;
+    agentPk: `0x${string}`;
+    agentName: string;
+  }) => {
+    // 1) Get injected wallet (MetaMask/Rabby/etc.)
+    const eth = (globalThis as any).ethereum;
+    if (!eth) throw new Error("No EVM provider found (window.ethereum)");
+
+    // 2) Use the connected owner account as signer
+    const wallet = createWalletClient({
+      // You can also pass { account: ownerAddress } if you have it handy;
+      // viem will infer from the provider’s selected account when omitted.
+      account: ownerAddress,
+      transport: custom(eth),
+    });
+
+    // 3) Make an ExchangeClient that uses that signer
+    const exch = new hl.ExchangeClient({
+      transport: httpTransport,
+      wallet,
+      isTestnet,
+    });
+
+    // 4) Derive agent address from the agent PK (do NOT send the PK anywhere)
+    const agentAddress = privateKeyToAccount(agentPk).address as `0x${string}`;
+
+    // 5) Approve/register the agent on HL
+    const res = await exch.approveAgent({ agentAddress, agentName });
+    console.log("✅ User agent approved:", res);
+    return res;
   },
 
   // Trading Operations
@@ -245,7 +293,7 @@ export const hyperliquidApi = {
     reduce_only = false,
   ) => {
     try {
-      const client = getTradingClient();
+      const client = getAgentExchangeClient();
       const result = await client.order({
         orders: [
           {
@@ -276,7 +324,7 @@ export const hyperliquidApi = {
     reduce_only = false,
   ) => {
     try {
-      const client = getTradingClient();
+      const client = getAgentExchangeClient();
       const result = await client.order({
         orders: [
           {
@@ -300,7 +348,7 @@ export const hyperliquidApi = {
 
   cancelOrder: async (asset: number, oid: number) => {
     try {
-      const client = getTradingClient();
+      const client = getAgentExchangeClient();
       const result = await client.cancel({
         cancels: [{ a: asset, o: oid }],
       });
@@ -314,7 +362,7 @@ export const hyperliquidApi = {
 
   cancelAllOrders: async (asset?: number) => {
     try {
-      const client = getTradingClient();
+      const client = getAgentExchangeClient();
       const result = await client.scheduleCancel();
       console.log("✅ All orders cancelled:", result);
       return result;
