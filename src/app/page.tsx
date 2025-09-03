@@ -13,6 +13,18 @@ import { MarketDataProvider } from "@/contexts/AppContext";
 import { WalletProvider } from "@/providers/WalletProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 import "react-grid-layout/css/styles.css";
+import {
+  Connector,
+  ConnectorEventMap,
+  CreateConnectorFn,
+  State,
+  Transport,
+  WagmiProvider,
+} from "wagmi";
+import { EventData } from "@wagmi/core/internal";
+import { EIP6963ProviderDetail } from "mipd";
+import { Chain, Client, EIP1193RequestFn } from "viem";
+import { WagmiProviders } from "@/providers/Wagmi";
 // TODO: figure out why this isn't being packaged with react-grid-layout
 // import "react-grid-layout/css/react-resizable.css";
 
@@ -176,48 +188,50 @@ export default function TradingPage() {
   };
 
   return (
-    <QueryProvider>
-      <WalletProvider>
-        <MarketDataProvider>
-          <div className="min-h-screen bg-background trading-gradient">
-            <Header />
+    <WagmiProviders>
+      <QueryProvider>
+        <WalletProvider>
+          <MarketDataProvider>
+            <div className="min-h-screen bg-background trading-gradient">
+              <Header />
 
-            <ResponsiveGridLayout
-              className="layout"
-              layouts={layouts}
-              breakpoints={{ lg: 1420, md: 1000, sm: 0 }}
-              cols={COLS}
-              rowHeight={30}
-              onLayoutChange={handleLayoutChange}
-              onBreakpointChange={handleBreakpointChange}
-              // TODO: implement draggabiliy
-              isDraggable={false}
-              isResizable={false}
-              margin={[1, 1]}
-              containerPadding={[0, 0]}
-            >
-              <div key="marketInfo" className="bg-card border rounded-lg">
-                <MarketInfoHeader />
-              </div>
-              <div key="chart" className="bg-card border rounded-lg">
-                <TradingChart />
-              </div>
-              <div key="orderbook" className="bg-card border rounded-lg">
-                <OrderBook />
-              </div>
-              <div key="trading" className="bg-card border rounded-lg">
-                <TradingInterface />
-              </div>
-              <div key="equity" className="bg-card border rounded-lg">
-                <AccountEquity />
-              </div>
-              <div key="userfeed" className="bg-card border rounded-lg">
-                <UserFeed />
-              </div>
-            </ResponsiveGridLayout>
-          </div>
-        </MarketDataProvider>
-      </WalletProvider>
-    </QueryProvider>
+              <ResponsiveGridLayout
+                className="layout"
+                layouts={layouts}
+                breakpoints={{ lg: 1420, md: 1000, sm: 0 }}
+                cols={COLS}
+                rowHeight={30}
+                onLayoutChange={handleLayoutChange}
+                onBreakpointChange={handleBreakpointChange}
+                // TODO: implement draggabiliy
+                isDraggable={false}
+                isResizable={false}
+                margin={[1, 1]}
+                containerPadding={[0, 0]}
+              >
+                <div key="marketInfo" className="bg-card border rounded-lg">
+                  <MarketInfoHeader />
+                </div>
+                <div key="chart" className="bg-card border rounded-lg">
+                  <TradingChart />
+                </div>
+                <div key="orderbook" className="bg-card border rounded-lg">
+                  <OrderBook />
+                </div>
+                <div key="trading" className="bg-card border rounded-lg">
+                  <TradingInterface />
+                </div>
+                <div key="equity" className="bg-card border rounded-lg">
+                  <AccountEquity />
+                </div>
+                <div key="userfeed" className="bg-card border rounded-lg">
+                  <UserFeed />
+                </div>
+              </ResponsiveGridLayout>
+            </div>
+          </MarketDataProvider>
+        </WalletProvider>
+      </QueryProvider>
+    </WagmiProviders>
   );
 }

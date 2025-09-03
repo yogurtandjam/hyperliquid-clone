@@ -1,10 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
-import { usePrivy } from "@privy-io/react-auth";
-import { hyperliquidApi } from "@/services/hyperliquidApi";
-import { formatters, toNumSafe } from "@/lib/utils";
-import { useAppData } from "@/contexts/AppContext";
-import { getUserState, num } from "./shared";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -13,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAppData } from "@/contexts/AppContext";
 
 type Pos = {
   coin: string;
@@ -33,7 +28,6 @@ export function PositionsTab() {
   // Convert positions from context to display format - use preformatted strings
   const rows: Pos[] = positions.map((pos) => {
     const markPrice = marketData[pos.coin]?.price || "0";
-
     return {
       coin: pos.coin,
       size: pos.szi,
@@ -42,9 +36,7 @@ export function PositionsTab() {
       markPrice,
       pnlRoe:
         pos.unrealizedPnl && pos.returnOnEquity
-          ? `$${parseFloat(pos.unrealizedPnl).toFixed(2)} (${
-              pos.returnOnEquity
-            })`
+          ? `${pos.unrealizedPnl} (${pos.returnOnEquity})`
           : "—",
       liquidationPrice: pos.liquidationPrice || "—",
       margin: pos.marginUsed || "—",

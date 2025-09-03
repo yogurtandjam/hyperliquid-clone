@@ -37,8 +37,8 @@ export const formatters = {
 
   formatPriceChange: (change: string | number): string => {
     const num = parseFloat(change.toString());
-    const sign = num >= 0 ? "+" : "";
-    return `${sign}$${num}`;
+    const sign = num >= 0 ? "+" : "-";
+    return `${sign}$${Math.abs(num).toFixed(2)}`;
   },
 
   formatPercentageChange: (change: string | number): string => {
@@ -141,3 +141,5 @@ export function inferDirection(
   if (isClosing) return isBuy ? "Close Short" : "Close Long";
   return isBuy ? "Long" : "Short";
 }
+
+export const isHex64 = (v: string) => v.startsWith("0x") && v.length === 66;

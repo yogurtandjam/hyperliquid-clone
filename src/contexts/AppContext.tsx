@@ -1,11 +1,12 @@
 "use client";
 
-import { useWebSocketSubscriptions } from "@/hooks/useWebSocketSubscriptions";
+import { useInitialFundingHistory } from "@/hooks/useInitialFundingHistory";
 import { useInitialMarketData } from "@/hooks/useInitialMarketData";
 import { useInitialOrderBook } from "@/hooks/useInitialOrderBook";
-import { useInitialFundingHistory } from "@/hooks/useInitialFundingHistory";
 import { useInitialOrderHistory } from "@/hooks/useInitialOrderHistory";
 import { useInitialTradesData } from "@/hooks/useInitialTradesData";
+import { useInitialTwapData } from "@/hooks/useInitialTwapData";
+import { useWebSocketSubscriptions } from "@/hooks/useWebSocketSubscriptions";
 import { formatters } from "@/lib/utils";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import {
@@ -24,16 +25,7 @@ import {
   OrderStatus,
   UserFundingUpdate,
 } from "@nktkas/hyperliquid";
-import { usePrivy } from "@privy-io/react-auth";
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { useInitialTwapData } from "@/hooks/useInitialTwapData";
+import { createContext, ReactNode, useContext, useMemo, useState } from "react";
 
 const AppDataContext = createContext<AppDataContextType | null>(null);
 
