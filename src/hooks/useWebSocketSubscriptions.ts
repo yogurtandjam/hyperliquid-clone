@@ -10,7 +10,7 @@ import type {
 } from "@nktkas/hyperliquid";
 import { usePrivy } from "@privy-io/react-auth";
 import { Address } from "viem";
-import { formatters, priceToWire, toNumSafe } from "@/lib/utils";
+import { formatters, isTruthy, priceToWire, toNumSafe } from "@/lib/utils";
 import {
   Asset,
   MarketData,
@@ -175,7 +175,7 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
                       ),
                     };
                   })
-                  .filter(Boolean) ?? [];
+                  .filter(isTruthy) ?? [];
 
               setPositions(positions);
             }

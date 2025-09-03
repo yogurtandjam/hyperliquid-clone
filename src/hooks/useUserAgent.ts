@@ -1,12 +1,18 @@
-import { hyperliquidApi } from "@/services/hyperliquidApi";
+import {
+  AGENT_PREFIX,
+  DEFAULT_KEY,
+  readAgentRecord,
+  LAST_ACTIVE_VAULT,
+} from "@/lib/utils";
+import {
+  createAgentExchangeClient,
+  getAgentExchangeClient,
+  hyperliquidApi,
+} from "@/services/hyperliquidApi";
+import { AgentRecord } from "@/types";
+import * as hl from "@nktkas/hyperliquid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAccount, useSignMessage } from "wagmi";
-
-// ===== Types =====
-export type AgentRecord = {
-  privateKey: `0x${string}`;
-  userAddress: `0x${string}` | "default";
-};
 
 export type UserAgentState = {
   agentName: string;
@@ -42,12 +48,8 @@ export type UseUserAgentReturn = {
   }>;
   // Direct access to the stored agent record for current owner (if any)
   getLocalAgentRecord: () => AgentRecord | null;
+  userAgentClient?: hl.ExchangeClient;
 };
-
-// ===== Constants =====
-const AGENT_PREFIX = "hyperliquid_agent_";
-const DEFAULT_KEY = "hyperliquid_agent_default";
-const LAST_ACTIVE_VAULT = "hyperliquid.last_active_vault_or_sub_account"; // maintained for parity
 
 // ===== Utilities =====
 const isHex64 = (v: string) => v.startsWith("0x") && v.length === 66;
@@ -72,20 +74,6 @@ const buildAuthMessage = (
     `Owner: ${owner}`,
     `Timestamp: ${ts}`,
   ].join("");
-
-const readAgentRecord = (
-  owner: string | undefined | null,
-): AgentRecord | null => {
-  if (!owner) return null;
-  try {
-    const raw =
-      localStorage.getItem(`${AGENT_PREFIX}${owner}`) ||
-      localStorage.getItem(DEFAULT_KEY);
-    return raw ? (JSON.parse(raw) as AgentRecord) : null;
-  } catch {
-    return null;
-  }
-};
 
 const writeAgentRecord = (
   owner: `0x${string}` | "default",
@@ -129,6 +117,14 @@ export function useUserAgent(): UseUserAgentReturn {
     if (!address) return false;
     const rec = readAgentRecord(address);
     return !!rec && rec.userAddress !== "default";
+  }, [address]);
+
+  const clearUserAgent = useCallback(() => {
+    if (!address) return;
+    // also nuke the default record HL uses for fallback
+    localStorage.removeItem(DEFAULT_KEY);
+    localStorage.removeItem(`${AGENT_PREFIX}${address}`);
+    setUserAgentState({});
   }, [address]);
 
   const getLocalAgentRecord = useCallback((): AgentRecord | null => {
@@ -191,7 +187,7 @@ export function useUserAgent(): UseUserAgentReturn {
         setIsCreatingUserAgent(false);
       }
     },
-    [address, isConnected],
+    [address, clearUserAgent, isConnected],
   );
 
   const setExistingUserAgent = useCallback(
@@ -227,13 +223,23 @@ export function useUserAgent(): UseUserAgentReturn {
     [address, isConnected],
   );
 
-  const clearUserAgent = useCallback(() => {
-    if (!address) return;
-    // also nuke the default record HL uses for fallback
-    localStorage.removeItem(DEFAULT_KEY);
-    localStorage.removeItem(`${AGENT_PREFIX}${address}`);
-    setUserAgentState({});
-  }, [address]);
+  const userAgentClient = useMemo((): hl.ExchangeClient | undefined => {
+    if (!isUserAgentCreated) {
+      console.error("No local user agent found. Create or connect one first.");
+      return;
+    }
+
+    const rec = readAgentRecord(address);
+    if (!rec?.privateKey) {
+      console.error("Missing agent private key in local storage.");
+      return;
+    }
+
+    // Always create a fresh client with the current private key
+    return createAgentExchangeClient({
+      agentPrivateKey: rec.privateKey,
+    });
+  }, [address, isUserAgentCreated]);
 
   return {
     userAgentState,
@@ -245,5 +251,6 @@ export function useUserAgent(): UseUserAgentReturn {
     clearUserAgent,
     getAuthBundle,
     getLocalAgentRecord,
+    userAgentClient,
   };
 }

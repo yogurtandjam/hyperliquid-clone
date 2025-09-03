@@ -69,11 +69,7 @@ export function MarketInfoHeader() {
         if (c.prevDayPx !== undefined && c.markPx !== undefined) {
           const abs = c.markPx - c.prevDayPx;
           setChangeAbs(
-            Number(
-              formatters.formatPriceChange(
-                priceToWire(abs, "perp", selectedAsset?.szDecimals),
-              ),
-            ),
+            parseFloat(priceToWire(abs, "perp", selectedAsset?.szDecimals)),
           );
           setChangePct(c.prevDayPx !== 0 ? abs / c.prevDayPx : undefined);
         }
@@ -120,7 +116,9 @@ export function MarketInfoHeader() {
           value={
             changeAbs == null || changePct == null
               ? "—"
-              : `${changeAbs} / ${formatters.formatPercentageChange(
+              : `${formatters.formatPriceChange(
+                  changeAbs,
+                )} / ${formatters.formatPercentageChange(
                   (changePct * 100).toString(),
                 )}`
           }
@@ -158,6 +156,7 @@ const Stat = ({
   value: string;
   colored?: number;
 }) => {
+  // TODO: this is a really stupid way to determine color. fix this.
   const isPos = (colored ?? 0) > 0;
   const isNeg = (colored ?? 0) < 0;
 

@@ -32,6 +32,7 @@ export type Trade = {
 export type Asset = {
   name: string;
   szDecimals: number;
+  index: number;
 };
 
 export type BalanceData = {
@@ -166,3 +167,8 @@ export type UserAgentErrorResponse = {
 export type UserAgentApiResponse =
   | UserAgentCreateResponse
   | UserAgentErrorResponse;
+
+export type AgentRecord = {
+  privateKey: `0x${string}`;
+  userAddress: `0x${string}` | "default";
+};

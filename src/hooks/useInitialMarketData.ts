@@ -28,17 +28,18 @@ export function useInitialMarketData({
         if (metaData && metaData.universe) {
           const perpetuals = metaData.universe.filter((asset) => asset.name); // Only perpetuals have names
 
-          console.log(
-            `✅ Found ${perpetuals.length} perpetuals:`,
-            perpetuals.slice(0, 10).map((asset) => asset.name),
+          console.log(`✅ Found ${perpetuals.length} perpetuals`);
+          setAvailableAssets(
+            perpetuals.map((p, index) => ({
+              ...p,
+              index,
+            })),
           );
-          setAvailableAssets(perpetuals);
-          
+
           // Set default symbol to the first available perpetual (usually BTC)
           if (perpetuals.length > 0 && !selectedSymbol) {
             const defaultAsset =
-              perpetuals.find((asset: Asset) => asset.name === "BTC") ||
-              perpetuals[0];
+              perpetuals.find((asset) => asset.name === "BTC") || perpetuals[0];
             setSelectedSymbol(defaultAsset.name);
           }
         }
