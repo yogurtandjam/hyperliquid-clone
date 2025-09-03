@@ -93,7 +93,7 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
   useInitialFundingHistory(7, setFundingHistory);
   useInitialOrderHistory(setOrderHistory);
   useInitialTradesData(setTradeHistory);
-  useInitialTwapData(setTwapData, 24);
+  useInitialTwapData(setTwapData);
 
   // Use consolidated WebSocket subscriptions hook
   useWebSocketSubscriptions({

@@ -6,18 +6,13 @@ import { usePrivy } from "@privy-io/react-auth";
 import { Address } from "viem";
 import { QueryKeys, TwapData } from "@/types";
 
-export function useInitialTwapData(
-  setTwapData: (twapData: TwapData) => void,
-  hours: number = 24
-) {
+export function useInitialTwapData(setTwapData: (twapData: TwapData) => void) {
   const { user, authenticated } = usePrivy();
   const userAddress = user?.wallet?.address as Address;
 
-  const endTime = Math.floor(Date.now() / 1000);
-  const startTime = endTime - hours * 60 * 60;
-
+  // TODO: actually finish implementing this stub.
   const query = useQuery({
-    queryKey: [QueryKeys.TwapData, userAddress, hours],
+    queryKey: [QueryKeys.TwapData, userAddress],
     queryFn: async () => {
       if (!userAddress) {
         throw new Error("User address not available");
@@ -25,19 +20,13 @@ export function useInitialTwapData(
 
       const twapSliceData = await hyperliquidApi.getTwapData(userAddress);
 
-      // Process TWAP slice data
-      if (!twapSliceData || !Array.isArray(twapSliceData)) {
-        return { twap: "0", volume: "0", trades: 0, period: `${hours}h` };
-      }
-
       // Calculate aggregated TWAP metrics from slice fills
       let totalVolume = 0;
-      let totalTrades = twapSliceData.length;
       let weightedPrice = 0;
 
       for (const slice of twapSliceData) {
-        const volume = parseFloat(slice.sz || "0");
-        const price = parseFloat(slice.px || "0");
+        const volume = parseFloat(slice.fill.sz || "0");
+        const price = parseFloat(slice.fill.px || "0");
 
         totalVolume += volume;
         weightedPrice += price * volume;
@@ -49,8 +38,8 @@ export function useInitialTwapData(
       const result = {
         twap,
         volume: totalVolume.toFixed(2),
-        trades: totalTrades,
-        period: `${hours}h`,
+        trades: twapSliceData.length,
+        period: "n/a",
       };
 
       // Update context state
