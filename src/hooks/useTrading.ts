@@ -36,8 +36,9 @@ export function useTrading() {
       sz,
       reduce_only = false,
     }: MarketOrderParams) => {
-      const price = orderBook?.asks[0].price;
-      console.log("price", price);
+      const price = is_buy
+        ? orderBook?.asks[0].price
+        : orderBook?.bids[0].price;
       if (!price) return;
       return await hyperliquidApi.placeMarketOrder(
         userAgentClient,

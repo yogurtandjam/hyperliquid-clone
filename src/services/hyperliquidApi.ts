@@ -346,7 +346,7 @@ export const hyperliquidApi = {
             p: limit_px,
             s: sz,
             r: reduce_only,
-            t: { limit: { tif } },
+            t: { limit: { tif: "FrontendMarket" } }, // Temporary test: use same TIF as market orders
           },
         ],
         grouping: "na",
