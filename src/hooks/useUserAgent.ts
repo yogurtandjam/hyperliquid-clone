@@ -48,7 +48,7 @@ export type UseUserAgentReturn = {
   }>;
   // Direct access to the stored agent record for current owner (if any)
   getLocalAgentRecord: () => AgentRecord | null;
-  userAgentClient: hl.ExchangeClient;
+  userAgentClient?: hl.ExchangeClient;
 };
 
 // ===== Utilities =====
@@ -223,14 +223,16 @@ export function useUserAgent(): UseUserAgentReturn {
     [address, isConnected],
   );
 
-  const userAgentClient = useMemo((): hl.ExchangeClient => {
+  const userAgentClient = useMemo((): hl.ExchangeClient | undefined => {
     if (!isUserAgentCreated) {
       console.error("No local user agent found. Create or connect one first.");
+      return;
     }
 
     const rec = readAgentRecord(address);
     if (!rec?.privateKey) {
-      throw new Error("Missing agent private key in local storage.");
+      console.error("Missing agent private key in local storage.");
+      return;
     }
 
     // Always create a fresh client with the current private key
