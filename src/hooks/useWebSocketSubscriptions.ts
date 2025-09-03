@@ -35,6 +35,8 @@ type WebSocketSubscriptionsProps = {
   setOpenOrders: React.Dispatch<React.SetStateAction<OpenOrder[]>>;
   setOrderBook: React.Dispatch<React.SetStateAction<OrderBookData | null>>;
   setRecentTrades: React.Dispatch<React.SetStateAction<Trade[]>>;
+  setFundingHistory: (fundingHistory: any[]) => void;
+  setOrderHistory: (orderHistory: any[]) => void;
 
   // Data dependencies
   availableAssets: Asset[];
@@ -52,6 +54,8 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
     setOpenOrders,
     setOrderBook,
     setRecentTrades,
+    setFundingHistory,
+    setOrderHistory,
     availableAssets,
     selectedSymbol,
     selectedAsset,
@@ -70,7 +74,8 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
     webData2?: Subscription;
     l2Book?: Subscription;
     trades?: Subscription;
-    allMids?: Subscription;
+    fundingHistory?: Subscription;
+    orderHistory?: Subscription;
   }>({});
 
   // WebData2 subscription (user account data + market data)
@@ -429,6 +434,103 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
     setOrderBook,
     setRecentTrades,
   ]);
+
+  // Funding History subscription
+  useEffect(() => {
+    const setupFundingHistorySubscription = async () => {
+      if (!user?.wallet?.address) return;
+
+      try {
+        console.log("🔗 Setting up funding history subscription...");
+
+        // Unsubscribe from previous subscription
+        if (subscriptionsRef.current.fundingHistory) {
+          await subscriptionsRef.current.fundingHistory.unsubscribe();
+        }
+
+        // Subscribe to user funding updates
+        subscriptionsRef.current.fundingHistory =
+          await subscriptionClient.userFundings(
+            {
+              user: user.wallet.address as Address,
+            },
+            (fundingData) => {
+              if (fundingData && Array.isArray(fundingData)) {
+                console.log("📊 Received funding update:", fundingData);
+
+                // Sort by time descending (newest first)
+                const sortedFunding = fundingData.sort(
+                  (a, b) => b.time - a.time,
+                );
+
+                // Update funding history state
+                setFundingHistory(sortedFunding);
+              }
+            },
+          );
+
+        console.log("✅ Funding history subscription established");
+      } catch (error) {
+        console.error("❌ Error setting up funding subscription:", error);
+      }
+    };
+
+    if (user?.wallet?.address) {
+      setupFundingHistorySubscription();
+    }
+
+    return () => {
+      if (subscriptionsRef.current.fundingHistory) {
+        subscriptionsRef.current.fundingHistory.unsubscribe();
+      }
+    };
+  }, [user?.wallet?.address, setFundingHistory]);
+
+  // Order History subscription
+  useEffect(() => {
+    const setupOrderHistorySubscription = async () => {
+      if (!user?.wallet?.address) return;
+
+      try {
+        console.log("🔗 Setting up order history subscription...");
+
+        // Unsubscribe from previous subscription
+        if (subscriptionsRef.current.orderHistory) {
+          await subscriptionsRef.current.orderHistory.unsubscribe();
+        }
+
+        // Subscribe to user fills updates (for real-time order fills)
+        subscriptionsRef.current.orderHistory =
+          await subscriptionClient.userFills(
+            {
+              user: user.wallet.address as Address,
+            },
+            (fillsData) => {
+              if (fillsData && Array.isArray(fillsData)) {
+                console.log("📊 Received order fills update:", fillsData);
+
+                // Update order history state with fills data
+                setOrderHistory(fillsData);
+              }
+            },
+          );
+
+        console.log("✅ Order history subscription established");
+      } catch (error) {
+        console.error("❌ Error setting up order history subscription:", error);
+      }
+    };
+
+    if (user?.wallet?.address) {
+      setupOrderHistorySubscription();
+    }
+
+    return () => {
+      if (subscriptionsRef.current.orderHistory) {
+        subscriptionsRef.current.orderHistory.unsubscribe();
+      }
+    };
+  }, [user?.wallet?.address, setOrderHistory]);
 
   // Cleanup all subscriptions on unmount
   useEffect(() => {

@@ -42,7 +42,9 @@ export function PositionsTab() {
       markPrice,
       pnlRoe:
         pos.unrealizedPnl && pos.returnOnEquity
-          ? `${pos.unrealizedPnl} (${pos.returnOnEquity})`
+          ? `$${parseFloat(pos.unrealizedPnl).toFixed(2)} (${
+              pos.returnOnEquity
+            })`
           : "—",
       liquidationPrice: pos.liquidationPrice || "—",
       margin: pos.marginUsed || "—",

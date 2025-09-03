@@ -1,6 +1,6 @@
 "use client";
 
-import { useFundingHistory } from "@/hooks/useFundingHistory";
+import { useAppData } from "@/contexts/AppContext";
 import {
   Table,
   TableBody,
@@ -12,7 +12,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function FundingHistoryTab() {
-  const { data: fundingHistory, isLoading, error } = useFundingHistory(7); // Last 7 days
+  const { fundingHistory } = useAppData();
+  
+  // For now, we'll assume loading is complete if we have the context
+  // Later we can add loading/error states to the AppContext if needed
+  const isLoading = false;
+  const error = null;
 
   if (isLoading) {
     return (

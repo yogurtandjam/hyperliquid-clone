@@ -38,7 +38,7 @@ export const formatters = {
   formatPriceChange: (change: string | number): string => {
     const num = parseFloat(change.toString());
     const sign = num >= 0 ? "+" : "";
-    return `${sign}${num}`;
+    return `${sign}$${num}`;
   },
 
   formatPercentageChange: (change: string | number): string => {

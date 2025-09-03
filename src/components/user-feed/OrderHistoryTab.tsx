@@ -1,6 +1,6 @@
 "use client";
 
-import { useOrderHistory } from "@/hooks/useOrderHistory";
+import { useAppData } from "@/contexts/AppContext";
 import {
   Table,
   TableBody,
@@ -13,7 +13,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { inferDirection } from "@/lib/utils";
 
 export function OrderHistoryTab() {
-  const { data: orderHistory = [], isLoading, error } = useOrderHistory();
+  const { orderHistory } = useAppData();
+  
+  // For now, we'll assume loading is complete if we have the context
+  // Later we can add loading/error states to the AppContext if needed
+  const isLoading = false;
+  const error = null;
 
   if (isLoading) {
     return (

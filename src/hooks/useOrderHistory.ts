@@ -2,14 +2,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { usePrivy } from "@privy-io/react-auth";
-import { useAppData } from "@/contexts/AppContext";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { Address } from "viem";
 import { QueryKeys } from "@/types";
+import { FrontendOrder, OrderStatus } from "@nktkas/hyperliquid";
 
-export function useOrderHistory() {
+export function useOrderHistory(
+  setOrderHistory: (orderHistory: OrderStatus<FrontendOrder>[]) => void
+) {
   const { user, authenticated } = usePrivy();
-  const { orderHistory, setOrderHistory } = useAppData();
   const userAddress = user?.wallet?.address as Address;
 
   const query = useQuery({
@@ -26,6 +27,7 @@ export function useOrderHistory() {
 
       // Update context state
       setOrderHistory(orderHistory);
+
       return orderHistory;
     },
     enabled: authenticated && !!userAddress,
@@ -33,9 +35,5 @@ export function useOrderHistory() {
     staleTime: 15000, // Data considered fresh for 15 seconds
   });
 
-  // Return data from context state, with query status
-  return {
-    ...query,
-    data: orderHistory,
-  };
+  return query;
 }

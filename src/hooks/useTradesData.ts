@@ -1,13 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { usePrivy } from "@privy-io/react-auth";
-import { useAppData } from "@/contexts/AppContext";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
 import { formatters } from "@/lib/utils";
 import { QueryKeys, Trade } from "@/types";
 
-export const useTradesData = () => {
+export const useTradesData = (setTradeHistory: (trades: Trade[]) => void) => {
   const { user } = usePrivy();
-  const { tradeHistory, setTradeHistory } = useAppData();
 
   const query = useQuery({
     queryKey: [QueryKeys.Trades, user?.wallet?.address],
@@ -45,9 +43,5 @@ export const useTradesData = () => {
     refetchInterval: 60000, // Refetch every minute
   });
 
-  // Return data from context state, with query status
-  return {
-    ...query,
-    data: tradeHistory.length > 0 ? tradeHistory : query.data,
-  };
+  return query;
 };
