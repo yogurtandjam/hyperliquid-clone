@@ -45,7 +45,7 @@ export function OpenOrdersTab() {
       size: order.sz,
       originalSize: order.origSz,
       orderValue: `$${orderValue.toFixed(2)}`,
-      price: formatters.formatPrice(order.px),
+      price: order.px,
       reduceOnly: order.reduceOnly,
       triggerConditions: "—", // TODO: Add trigger conditions when available
     };

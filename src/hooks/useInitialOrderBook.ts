@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
-import { formatters } from "@/lib/utils";
+import { formatters, ORDERBOOK_MAX_ROWS } from "@/lib/utils";
 import { OrderBookData } from "@/types";
 
 type UseInitialOrderBookProps = {
@@ -28,29 +28,28 @@ export function useInitialOrderBook({
           const asks = levels[1] || [];
 
           const processedBids = (Array.isArray(bids) ? bids : [])
-            .slice(0, 15)
+            .slice(0, ORDERBOOK_MAX_ROWS)
             .map((level) => {
               const price = Array.isArray(level) ? level[0] : level.px || "0";
               const size = Array.isArray(level) ? level[1] : level.sz || "0";
               return {
-                price: formatters.formatPrice(price),
-                size: formatters.formatSize(size),
-                total: formatters.formatSize(size),
+                price: price,
+                size: size,
+                total: size,
               };
             });
 
           const processedAsks = (Array.isArray(asks) ? asks : [])
-            .slice(0, 15)
+            .slice(0, ORDERBOOK_MAX_ROWS)
             .map((level) => {
               const price = Array.isArray(level) ? level[0] : level.px || "0";
               const size = Array.isArray(level) ? level[1] : level.sz || "0";
               return {
-                price: formatters.formatPrice(price),
-                size: formatters.formatSize(size),
-                total: formatters.formatSize(size),
+                price: price,
+                size: size,
+                total: size,
               };
             });
-
           setOrderBook({
             symbol: selectedSymbol,
             bids: processedBids,

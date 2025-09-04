@@ -80,6 +80,7 @@ export type TwapData = {
 
 export type AppDataContextType = {
   // Market data (WebSocket)
+  assetsMap: { [k: string]: Asset };
   marketData: MarketData;
   orderBook: OrderBookData | null;
   recentTrades: Trade[];

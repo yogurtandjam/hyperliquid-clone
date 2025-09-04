@@ -169,14 +169,17 @@ export const readAgentRecord = (
   }
 };
 
+// TODO maybe delete this, doesn't really seem necessary
 export const mapTradeHistory = (fill: Fill): Trade => ({
   coin: String(fill.coin || ""),
   side:
     String(fill.dir) === "Open Long" || String(fill.dir) === "Close Short"
       ? ("buy" as const)
       : ("sell" as const),
-  price: formatters.formatPrice(fill.px || "0"),
-  size: formatters.formatSize(fill.sz || "0"),
+  price: fill.px || "0",
+  size: fill.sz || "0",
   time: Number(fill.time || Date.now()),
   txHash: fill.hash,
 });
+
+export const ORDERBOOK_MAX_ROWS = 10;

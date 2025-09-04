@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function TradeHistoryTab() {
   const { tradeHistory } = useAppData();
-  
+
   // For now, we'll assume loading is complete if we have the context
   // Later we can add loading/error states to the AppContext if needed
   const isLoading = false;
@@ -46,7 +46,10 @@ export function TradeHistoryTab() {
           <TableBody>
             {allTrades.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-gray-400">
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-8 text-gray-400"
+                >
                   No trade history
                 </TableCell>
               </TableRow>

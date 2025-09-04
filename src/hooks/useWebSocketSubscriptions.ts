@@ -14,6 +14,7 @@ import {
   formatters,
   isTruthy,
   mapTradeHistory,
+  ORDERBOOK_MAX_ROWS,
   priceToWire,
   toNumSafe,
 } from "@/lib/utils";
@@ -54,6 +55,7 @@ type WebSocketSubscriptionsProps = {
   availableAssets: Asset[];
   selectedSymbol: string;
   selectedAsset: Asset | null;
+  assetsMap: { [k: string]: Asset };
 };
 
 export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
@@ -72,15 +74,10 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
     availableAssets,
     selectedSymbol,
     selectedAsset,
+    assetsMap,
   } = props;
 
   // Create assetsMap from availableAssets
-  const assetsMap = React.useMemo(() => {
-    return availableAssets.reduce((map, asset) => {
-      map[asset.name] = asset;
-      return map;
-    }, {} as { [k: string]: Asset });
-  }, [availableAssets]);
 
   // Subscription refs
   const subscriptionsRef = React.useRef<{
@@ -342,7 +339,7 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
 
               // Process bids and asks with running totals
               const processedBids = (Array.isArray(bids) ? bids : [])
-                .slice(0, 15)
+                .slice(0, ORDERBOOK_MAX_ROWS)
                 .map((level, index: number) => {
                   const price = level.px || "0";
                   const size = level.sz || "0";
@@ -360,9 +357,8 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
                     total: runningTotal.toString(),
                   };
                 });
-
               const processedAsks = (Array.isArray(asks) ? asks : [])
-                .slice(0, 15)
+                .slice(0, ORDERBOOK_MAX_ROWS)
                 .map((level, index: number) => {
                   const price = Array.isArray(level)
                     ? level[0]

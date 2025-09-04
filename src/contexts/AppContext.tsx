@@ -87,6 +87,13 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
   useInitialTradesData(setTradeHistory);
   useInitialTwapData(setTwapData);
 
+  const assetsMap = useMemo(() => {
+    return availableAssets.reduce((map, asset) => {
+      map[asset.name] = asset;
+      return map;
+    }, {} as { [k: string]: Asset });
+  }, [availableAssets]);
+
   // Use consolidated WebSocket subscriptions hook
   useWebSocketSubscriptions({
     setMarketData,
@@ -98,9 +105,11 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
     setRecentTrades,
     setFundingHistory,
     setOrderHistory,
+    setTradeHistory,
     availableAssets,
     selectedSymbol,
     selectedAsset,
+    assetsMap,
   });
 
   const refreshData = async () => {
@@ -114,7 +123,7 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
             const prevData = prev[symbol];
             updatedMarketData[symbol] = {
               ...prevData,
-              price: formatters.formatPrice(price as string),
+              price,
             };
           });
           return { ...prev, ...updatedMarketData };
@@ -130,6 +139,7 @@ export function AppDataProvider({ children }: MarketDataProviderProps) {
     <AppDataContext.Provider
       value={{
         // Market data (WebSocket)
+        assetsMap,
         marketData,
         orderBook,
         recentTrades,
