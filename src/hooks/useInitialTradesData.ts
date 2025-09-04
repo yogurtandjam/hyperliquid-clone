@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { usePrivy } from "@privy-io/react-auth";
 import { hyperliquidApi } from "@/services/hyperliquidApi";
-import { formatters } from "@/lib/utils";
+import { formatters, mapTradeHistory } from "@/lib/utils";
 import { QueryKeys, Trade } from "@/types";
+import { Address } from "viem";
 
-export const useInitialTradesData = (setTradeHistory: (trades: Trade[]) => void) => {
+export const useInitialTradesData = (
+  setTradeHistory: (trades: Trade[]) => void,
+) => {
   const { user } = usePrivy();
 
   const query = useQuery({
@@ -14,21 +17,12 @@ export const useInitialTradesData = (setTradeHistory: (trades: Trade[]) => void)
         return [];
       }
 
-      const response = await hyperliquidApi.getUserFills(user.wallet.address);
+      const response = await hyperliquidApi.getUserFills(
+        user.wallet.address as Address,
+      );
       if (response && Array.isArray(response)) {
         const mapped: Trade[] = response
-          .map((fill) => ({
-            coin: String(fill.coin || ""),
-            side:
-              String(fill.dir) === "Open Long" ||
-              String(fill.dir) === "Close Short"
-                ? "buy"
-                : "sell",
-            price: formatters.formatPrice(fill.px || "0"),
-            size: formatters.formatSize(fill.sz || "0"),
-            time: Number(fill.time || Date.now()),
-            txHash: fill.hash,
-          }))
+          .map(mapTradeHistory)
           .sort((a, b) => b.time - a.time)
           .slice(0, 100); // Limit to last 100 trades
 

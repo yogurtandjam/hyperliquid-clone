@@ -10,7 +10,13 @@ import type {
 } from "@nktkas/hyperliquid";
 import { usePrivy } from "@privy-io/react-auth";
 import { Address } from "viem";
-import { formatters, isTruthy, priceToWire, toNumSafe } from "@/lib/utils";
+import {
+  formatters,
+  isTruthy,
+  mapTradeHistory,
+  priceToWire,
+  toNumSafe,
+} from "@/lib/utils";
 import {
   Asset,
   MarketData,
@@ -40,6 +46,7 @@ type WebSocketSubscriptionsProps = {
   setOpenOrders: React.Dispatch<React.SetStateAction<OpenOrder[]>>;
   setOrderBook: React.Dispatch<React.SetStateAction<OrderBookData | null>>;
   setRecentTrades: React.Dispatch<React.SetStateAction<Trade[]>>;
+  setTradeHistory: React.Dispatch<React.SetStateAction<Trade[]>>;
   setFundingHistory: (fundingHistory: UserFundingUpdate[]) => void;
   setOrderHistory: (orderHistory: OrderStatus<FrontendOrder>[]) => void;
 
@@ -59,6 +66,7 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
     setOpenOrders,
     setOrderBook,
     setRecentTrades,
+    setTradeHistory,
     setFundingHistory,
     setOrderHistory,
     availableAssets,
@@ -80,7 +88,7 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
     l2Book?: Subscription;
     trades?: Subscription;
     fundingHistory?: Subscription;
-    orderHistory?: Subscription;
+    tradeHistory?: Subscription;
   }>({});
 
   // WebData2 subscription (user account data + market data)
@@ -493,19 +501,19 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
 
   // Order History subscription
   useEffect(() => {
-    const setupOrderHistorySubscription = async () => {
+    const setupTradeHistorySubscription = async () => {
       if (!user?.wallet?.address) return;
 
       try {
         console.log("🔗 Setting up order history subscription...");
 
         // Unsubscribe from previous subscription
-        if (subscriptionsRef.current.orderHistory) {
-          await subscriptionsRef.current.orderHistory.unsubscribe();
+        if (subscriptionsRef.current.tradeHistory) {
+          await subscriptionsRef.current.tradeHistory.unsubscribe();
         }
 
         // Subscribe to user fills updates (for real-time order fills)
-        subscriptionsRef.current.orderHistory =
+        subscriptionsRef.current.tradeHistory =
           await subscriptionClient.userFills(
             {
               user: user.wallet.address as Address,
@@ -515,7 +523,7 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
                 console.log("📊 Received order fills update:", fillsData);
 
                 // Update order history state with fills data
-                setOrderHistory(fillsData);
+                setTradeHistory(fillsData.map(mapTradeHistory));
               }
             },
           );
@@ -527,12 +535,12 @@ export function useWebSocketSubscriptions(props: WebSocketSubscriptionsProps) {
     };
 
     if (user?.wallet?.address) {
-      setupOrderHistorySubscription();
+      setupTradeHistorySubscription();
     }
 
     return () => {
-      if (subscriptionsRef.current.orderHistory) {
-        subscriptionsRef.current.orderHistory.unsubscribe();
+      if (subscriptionsRef.current.tradeHistory) {
+        subscriptionsRef.current.tradeHistory.unsubscribe();
       }
     };
   }, [user?.wallet?.address, setOrderHistory]);

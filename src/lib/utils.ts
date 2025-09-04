@@ -1,5 +1,5 @@
-import { AgentRecord } from "@/hooks/useUserAgent";
-import { Candle } from "@nktkas/hyperliquid";
+import { AgentRecord, Trade } from "@/types";
+import { Candle, Fill } from "@nktkas/hyperliquid";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -168,3 +168,15 @@ export const readAgentRecord = (
     return null;
   }
 };
+
+export const mapTradeHistory = (fill: Fill): Trade => ({
+  coin: String(fill.coin || ""),
+  side:
+    String(fill.dir) === "Open Long" || String(fill.dir) === "Close Short"
+      ? ("buy" as const)
+      : ("sell" as const),
+  price: formatters.formatPrice(fill.px || "0"),
+  size: formatters.formatSize(fill.sz || "0"),
+  time: Number(fill.time || Date.now()),
+  txHash: fill.hash,
+});
