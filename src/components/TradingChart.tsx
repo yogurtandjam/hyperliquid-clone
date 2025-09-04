@@ -1,30 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/custom-tabs";
+import { useAppData } from "@/contexts/AppContext";
+import { maxPriceDecimals } from "@/lib/utils";
+import { infoClient, subscriptionClient } from "@/services/hyperliquidApi";
+import { Candle } from "@nktkas/hyperliquid";
 import {
+  CandlestickData,
   createChart,
   IChartApi,
-  CandlestickData,
-  Time,
   ISeriesApi,
-  HistogramData,
+  Time,
 } from "lightweight-charts";
-import { subscriptionClient, infoClient } from "@/services/hyperliquidApi";
-import { formatters } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/custom-tabs";
-import {
-  BarChart3,
-  TrendingUp,
-  Settings,
-  Maximize,
-  Search,
-  Volume2,
-  CandlestickChart,
-} from "lucide-react";
-import { Candle } from "@nktkas/hyperliquid";
-import { useAppData } from "@/contexts/AppContext";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /* ---------------- Types ---------------- */
 type TFKey =
@@ -128,7 +116,7 @@ export const TradingChart = () => {
   > | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
 
-  const { selectedSymbol } = useAppData();
+  const { selectedSymbol, assetsMap } = useAppData();
 
   const [timeFrame, setTimeframe] = useState<TFKey>("1D_1M");
   const [isLoading, setIsLoading] = useState(true);
@@ -162,6 +150,7 @@ export const TradingChart = () => {
       leftPriceScale: {
         borderVisible: false,
         visible: true,
+        autoScale: true,
       },
       rightPriceScale: {
         borderVisible: false,
@@ -169,9 +158,14 @@ export const TradingChart = () => {
       },
       timeScale: { borderVisible: false, timeVisible: true },
     });
-
     const series = chart.addCandlestickSeries({
       priceScaleId: "left",
+      priceFormat: {
+        precision: maxPriceDecimals(
+          "perp",
+          assetsMap[selectedSymbol].szDecimals,
+        ),
+      },
     });
 
     chartRef.current = chart;
