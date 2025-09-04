@@ -90,7 +90,7 @@ export function OrderBook() {
           className="flex-1 space-y-4  flex flex-col"
         >
           <ScrollArea className="flex-1 min-h-0">
-            <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700 px-2">
+            <div className="h-full grid grid-cols-3 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700 px-2">
               <div className="text-left">Price</div>
               <div className="text-right">Size ({selectedSymbol})</div>
               <div className="text-right">Total ({selectedSymbol})</div>
@@ -145,14 +145,16 @@ export function OrderBook() {
           </ScrollArea>
         </TabsContent>
 
-        <TabsContent value="trades" className="flex-1 space-y-4 flex flex-col">
-          <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700">
-            <div className="text-right">Price</div>
-            <div className="text-right">Size ({selectedSymbol})</div>
-            <div className="text-right">Time</div>
-          </div>
-
-          <ScrollArea className="flex-1 min-h-0 scrollbar-thin">
+        <ScrollArea className="flex-1 min-h-0 scrollbar-thin">
+          <TabsContent
+            value="trades"
+            className="flex-1 space-y-4 flex flex-col"
+          >
+            <div className="grid grid-cols-3 gap-2 text-xs text-gray-400 pb-2 border-b border-gray-700 px-2">
+              <div className="text-right">Price</div>
+              <div className="text-right">Size ({selectedSymbol})</div>
+              <div className="text-right">Time</div>
+            </div>
             {recentTrades.length > 0 ? (
               <div className="space-y-1">
                 {recentTrades.map((trade, index) => (
@@ -200,8 +202,8 @@ export function OrderBook() {
                 Loading trades...
               </div>
             )}
-          </ScrollArea>
-        </TabsContent>
+          </TabsContent>
+        </ScrollArea>
       </Tabs>
     </div>
   );
