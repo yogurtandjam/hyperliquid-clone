@@ -163,7 +163,7 @@ export const TradingChart = () => {
       priceFormat: {
         precision: maxPriceDecimals(
           "perp",
-          assetsMap[selectedSymbol].szDecimals,
+          assetsMap[selectedSymbol]?.szDecimals,
         ),
       },
     });
